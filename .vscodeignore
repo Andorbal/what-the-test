@@ -7,3 +7,5 @@ test-fixtures/**
 **/*.map
 **/tsconfig.json
 .gitignore
+scripts/**
+RELEASING.md

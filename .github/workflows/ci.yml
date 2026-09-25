@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+  # Called by the release workflow so a release is built exactly like CI builds.
+  workflow_call:
 
 jobs:
   test:
@@ -23,8 +26,23 @@ jobs:
           dotnet-version: 8.0.x
       - name: Integration tests (C#)
         run: xvfb-run -a npm run test:integration:csharp
-      - run: npx vsce package --out what-the-test.vsix
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Package .vsix
+        id: package
+        run: |
+          npm run package
+          echo "file=$(node scripts/package.mjs --print | node -p 'JSON.parse(require("fs").readFileSync(0)).file')" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
-          name: what-the-test-vsix
-          path: what-the-test.vsix
+          name: vsix
+          path: ${{ steps.package.outputs.file }}
+          if-no-files-found: error

@@ -15,6 +15,19 @@ Supported out of the box:
 Other languages can be added by implementing a small adapter (see
 [Adding a language](#adding-a-language)).
 
+## Installation
+
+Download `what-the-test-<version>.vsix` from the
+[latest GitHub Release](https://github.com/andorbal/what-the-test/releases), or
+from the `vsix` artifact of any [CI run](https://github.com/andorbal/what-the-test/actions/workflows/ci.yml). Then either:
+
+- in VS Code, open the Extensions view → `…` → **Install from VSIX…**, or
+- run `code --install-extension what-the-test-<version>.vsix`.
+
+Versions with an odd minor number (such as 0.1.x) are pre-releases. See
+[RELEASING.md](RELEASING.md) for the versioning strategy and release process,
+and [CHANGELOG.md](CHANGELOG.md) for what changed.
+
 ## Features
 
 - **Inline count**: `⚗ 3 tests` appears at the end of the current line when tests reach it.
@@ -161,7 +174,7 @@ npm run compile
 npm run test:unit                 # parsers and ID matching, plain Node
 npm run test:integration          # in VS Code: TS language server + fake test controllers
 npm run test:integration:csharp   # in VS Code with the C# extension (needs the .NET SDK)
-npm run package                   # builds a .vsix
+npm run package                   # builds what-the-test-<version>.vsix
 ```
 
 On Linux without a display, prefix the integration tests with `xvfb-run -a`.

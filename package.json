@@ -224,8 +224,9 @@
     "test:unit": "npm run compile && mocha \"out/test/unit/**/*.test.js\"",
     "test:integration": "npm run compile && node ./out/test/integration/runTests.js",
     "test": "npm run test:unit && npm run test:integration",
-    "package": "vsce package",
-    "test:integration:csharp": "npm run compile && node ./out/test/integration/runCSharpTests.js"
+    "package": "node scripts/package.mjs",
+    "test:integration:csharp": "npm run compile && node ./out/test/integration/runCSharpTests.js",
+    "version": "node scripts/changelog.mjs release $npm_package_version && git add CHANGELOG.md"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
