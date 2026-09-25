@@ -1,0 +1,56 @@
+name: Release
+
+# Push a tag created by `npm version` (e.g. v0.2.0) to publish a release.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    outputs:
+      pre-release: ${{ steps.info.outputs.pre-release }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the tag matches package.json and CHANGELOG.md
+        id: info
+        run: |
+          info=$(node scripts/package.mjs --print)
+          version=$(echo "$info" | node -p 'JSON.parse(require("fs").readFileSync(0)).version')
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+          node scripts/changelog.mjs notes "$version" > /dev/null
+          echo "pre-release=$(echo "$info" | node -p 'JSON.parse(require("fs").readFileSync(0)).preRelease')" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: verify
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: [verify, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: vsix
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/changelog.mjs notes "${GITHUB_REF_NAME#v}" > notes.md
+          flags=""
+          if [ "${{ needs.verify.outputs.pre-release }}" = "true" ]; then flags="--prerelease"; fi
+          gh release create "$GITHUB_REF_NAME" *.vsix --title "$GITHUB_REF_NAME" --notes-file notes.md $flags
+      - name: Publish to the VS Code Marketplace
+        # Optional: runs only when a VSCE_PAT secret is configured.
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        if: env.VSCE_PAT != ''
+        # The .vsix already records whether it is a pre-release.
+        run: npx --yes @vscode/vsce publish --packagePath *.vsix

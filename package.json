@@ -1,0 +1,240 @@
+{
+  "name": "what-the-test",
+  "displayName": "What the Test",
+  "description": "See which tests exercise a line of code, jump to them, and run them through VS Code's built-in Testing infrastructure.",
+  "version": "0.1.0",
+  "publisher": "andorbal",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andorbal/what-the-test"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Testing"
+  ],
+  "keywords": [
+    "test",
+    "testing",
+    "coverage",
+    "csharp",
+    "dotnet",
+    "typescript",
+    "javascript"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:csharp",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "whatTheTest.showTestsForLine",
+        "title": "Show Tests Covering Line",
+        "category": "What the Test",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "whatTheTest.runTestsForLine",
+        "title": "Run All Tests Covering Line",
+        "category": "What the Test",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "whatTheTest.debugTestsForLine",
+        "title": "Debug All Tests Covering Line",
+        "category": "What the Test",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "whatTheTest.refresh",
+        "title": "Refresh Tests Covering Line",
+        "category": "What the Test",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "whatTheTest.runTest",
+        "title": "Run Test",
+        "category": "What the Test",
+        "icon": "$(run)"
+      },
+      {
+        "command": "whatTheTest.debugTest",
+        "title": "Debug Test",
+        "category": "What the Test",
+        "icon": "$(debug-alt-small)"
+      },
+      {
+        "command": "whatTheTest.goToTest",
+        "title": "Go to Test",
+        "category": "What the Test",
+        "icon": "$(go-to-file)"
+      }
+    ],
+    "views": {
+      "test": [
+        {
+          "id": "whatTheTest.lineTests",
+          "name": "Tests Covering Line",
+          "icon": "$(beaker)"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "whatTheTest.lineTests",
+        "contents": "Place the cursor on a line of C#, TypeScript or JavaScript code to see the tests that exercise it."
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "whatTheTest.runTest",
+          "when": "false"
+        },
+        {
+          "command": "whatTheTest.debugTest",
+          "when": "false"
+        },
+        {
+          "command": "whatTheTest.goToTest",
+          "when": "false"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "whatTheTest.showTestsForLine",
+          "when": "whatTheTest.supportedEditor",
+          "group": "testing@10"
+        },
+        {
+          "command": "whatTheTest.runTestsForLine",
+          "when": "whatTheTest.supportedEditor",
+          "group": "testing@11"
+        },
+        {
+          "command": "whatTheTest.debugTestsForLine",
+          "when": "whatTheTest.supportedEditor",
+          "group": "testing@12"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "whatTheTest.runTestsForLine",
+          "when": "view == whatTheTest.lineTests",
+          "group": "navigation@1"
+        },
+        {
+          "command": "whatTheTest.debugTestsForLine",
+          "when": "view == whatTheTest.lineTests",
+          "group": "navigation@2"
+        },
+        {
+          "command": "whatTheTest.refresh",
+          "when": "view == whatTheTest.lineTests",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "whatTheTest.runTest",
+          "when": "view == whatTheTest.lineTests && viewItem == coveringTest",
+          "group": "inline@1"
+        },
+        {
+          "command": "whatTheTest.debugTest",
+          "when": "view == whatTheTest.lineTests && viewItem == coveringTest",
+          "group": "inline@2"
+        },
+        {
+          "command": "whatTheTest.goToTest",
+          "when": "view == whatTheTest.lineTests && viewItem == coveringTest",
+          "group": "inline@3"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "What the Test",
+      "properties": {
+        "whatTheTest.showInlineCount": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the number of covering tests at the end of the current line."
+        },
+        "whatTheTest.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the number of covering tests in the status bar."
+        },
+        "whatTheTest.maxSearchDepth": {
+          "type": "number",
+          "default": 8,
+          "minimum": 1,
+          "description": "How many levels of callers to walk when searching for tests that reach a line."
+        },
+        "whatTheTest.maxVisitedSymbols": {
+          "type": "number",
+          "default": 400,
+          "minimum": 10,
+          "description": "Upper bound on the number of symbols visited while walking the call graph for one line."
+        },
+        "whatTheTest.debounceMs": {
+          "type": "number",
+          "default": 400,
+          "minimum": 0,
+          "description": "Delay after the cursor stops moving before covering tests are computed."
+        },
+        "whatTheTest.csharp.additionalTestAttributes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra C# attribute names (without the 'Attribute' suffix) that mark a method as a test."
+        },
+        "whatTheTest.javascript.additionalTestFunctions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra JavaScript/TypeScript function names that declare a test (for example 'scenario')."
+        },
+        "whatTheTest.javascript.additionalSuiteFunctions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra JavaScript/TypeScript function names that declare a test suite (for example 'feature')."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test:unit": "npm run compile && mocha \"out/test/unit/**/*.test.js\"",
+    "test:integration": "npm run compile && node ./out/test/integration/runTests.js",
+    "test": "npm run test:unit && npm run test:integration",
+    "package": "node scripts/package.mjs",
+    "test:integration:csharp": "npm run compile && node ./out/test/integration/runCSharpTests.js",
+    "version": "node scripts/changelog.mjs release $npm_package_version && git add CHANGELOG.md"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.20.4",
+    "@types/vscode": "~1.90.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.0.0",
+    "mocha": "^11.7.0",
+    "typescript": "~5.9.3"
+  }
+}
