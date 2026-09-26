@@ -135,6 +135,18 @@ suite('What the Test', () => {
     assert.deepStrictEqual(ctor.tests.map(t => [t.declaration.name, t.via.join(',')]), [['greets loudly', 'makeGreeter']]);
   });
 
+  test('finds every test in a file that calls the line', async () => {
+    // TypeScript reports the calls from both `it(...)` callbacks as one caller
+    // (the test file) with two call sites.
+    const uri = vscode.Uri.joinPath(workspace(), 'src/strings.ts');
+    const doc = await vscode.workspace.openTextDocument(uri);
+    const result = await waitFor('covering tests', async () => {
+      const r = await api.findTestsForLine(doc, await lineOf(uri, 'toUpperCase()'));
+      return r.tests.length ? r : undefined;
+    });
+    assert.deepStrictEqual(result.tests.map(t => t.declaration.name), ['upper-cases the text', 'adds an exclamation mark']);
+  });
+
   test('reports no tests for uncovered code', async () => {
     const doc = await vscode.workspace.openTextDocument(sourceUri());
     const result = await api.findTestsForLine(doc, await lineOf(sourceUri(), 'nobody calls me'));

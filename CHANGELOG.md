@@ -14,6 +14,11 @@ All notable changes to What the Test are documented here. The format follows
   and publishes it as a GitHub Release.
 - CI uploads an installable `.vsix` for every push and pull request.
 
+### Fixed
+
+- TypeScript/JavaScript: when several tests in one file call the code, all of
+  them are found, not only the first.
+
 ## [0.1.0] - 2026-09-25
 
 ### Added

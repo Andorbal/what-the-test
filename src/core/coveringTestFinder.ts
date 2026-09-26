@@ -171,13 +171,18 @@ export class CoveringTestFinder {
           continue;
         }
         const testFile = this.registry.parseTestFile(doc);
-        let decl = testFile && site.ranges.map(r => declarationAt(testFile.parsed, r.start)).find(d => d);
-        if (testFile && !decl && site.caller && isAnonymousCallback(site.caller.name)) {
+        // One caller can hold several call sites in different tests: TypeScript
+        // reports the calls from all of a file's `it(...)` callbacks as calls from the file.
+        let decls = testFile ? site.ranges.map(r => declarationAt(testFile.parsed, r.start)).filter(d => d !== undefined) : [];
+        if (testFile && !decls.length && site.caller && isAnonymousCallback(site.caller.name)) {
           // Called directly from a `describe(...)` body, which runs for the whole suite.
-          decl = innermostDeclaration(testFile.parsed, 'suite', site.ranges[0].start);
+          const suite = innermostDeclaration(testFile.parsed, 'suite', site.ranges[0].start);
+          decls = suite ? [suite] : [];
         }
-        if (testFile && decl) {
-          this.record(found, site.uri, decl, testFile.adapter, node.depth + 1, via);
+        if (testFile && decls.length) {
+          for (const decl of decls) {
+            this.record(found, site.uri, decl, testFile.adapter, node.depth + 1, via);
+          }
           continue;
         }
         if (node.depth + 1 >= options.maxDepth) {
