@@ -53,6 +53,24 @@
         "icon": "$(debug-alt)"
       },
       {
+        "command": "whatTheTest.showTestsForChanges",
+        "title": "Show Tests Covering Changes",
+        "category": "What the Test",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "whatTheTest.runTestsForChanges",
+        "title": "Run Tests Covering Changes",
+        "category": "What the Test",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "whatTheTest.debugTestsForChanges",
+        "title": "Debug Tests Covering Changes",
+        "category": "What the Test",
+        "icon": "$(debug-alt)"
+      },
+      {
         "command": "whatTheTest.refresh",
         "title": "Refresh Tests Covering Line",
         "category": "What the Test",
@@ -169,6 +187,21 @@
           "command": "whatTheTest.unpin",
           "when": "view == whatTheTest.lineTests && whatTheTest.pinned",
           "group": "navigation@4"
+        },
+        {
+          "command": "whatTheTest.showTestsForChanges",
+          "when": "view == whatTheTest.lineTests",
+          "group": "changes@1"
+        },
+        {
+          "command": "whatTheTest.runTestsForChanges",
+          "when": "view == whatTheTest.lineTests",
+          "group": "changes@2"
+        },
+        {
+          "command": "whatTheTest.debugTestsForChanges",
+          "when": "view == whatTheTest.lineTests",
+          "group": "changes@3"
         }
       ],
       "view/item/context": [
@@ -186,6 +219,18 @@
           "command": "whatTheTest.goToTest",
           "when": "view == whatTheTest.lineTests && viewItem == coveringTest",
           "group": "inline@3"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "whatTheTest.showTestsForChanges",
+          "when": "scmProvider == git",
+          "group": "whatTheTest@1"
+        },
+        {
+          "command": "whatTheTest.runTestsForChanges",
+          "when": "scmProvider == git",
+          "group": "whatTheTest@2"
         }
       ]
     },
@@ -219,6 +264,11 @@
           "default": 400,
           "minimum": 0,
           "description": "Delay after the cursor stops moving before covering tests are computed."
+        },
+        "whatTheTest.runTestsOnSave": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "After saving a file, run the tests that cover the lines changed since it was last saved. Tests that can only be run with **Run Test at Cursor** are skipped (see the *What the Test* output)."
         },
         "whatTheTest.csharp.additionalTestAttributes": {
           "type": "array",

@@ -278,4 +278,83 @@ suite('What the Test', () => {
     assert.strictEqual(unpinned.line, await lineOf(sourceUri(), 'nobody calls me'));
     assert.strictEqual(unpinned.tests.length, 0);
   });
+
+  suite('tests covering changes', () => {
+    let fake: Awaited<ReturnType<typeof createFakeController>>;
+    setup(async () => {
+      fake = await createFakeController('fake-changes', path => ['changes', ...path].join('.'));
+    });
+    teardown(async () => {
+      fake.controller.dispose();
+      await vscode.workspace.getConfiguration('whatTheTest').update('runTestsOnSave', undefined, vscode.ConfigurationTarget.Global);
+      // Undo edits (saved or not) to the fixtures.
+      for (const uri of [sourceUri(), testUri()]) {
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const original = originals.get(uri.toString());
+        if (original !== undefined && doc.getText() !== original) {
+          const editor = await vscode.window.showTextDocument(doc);
+          await editor.edit(b => b.replace(new vscode.Range(0, 0, doc.lineCount, 0), original));
+        }
+        if (doc.isDirty) {
+          await doc.save();
+        }
+      }
+    });
+
+    const originals = new Map<string, string>();
+    async function editLine(uri: vscode.Uri, needle: string, from: string, to: string): Promise<vscode.TextDocument> {
+      const doc = await vscode.workspace.openTextDocument(uri);
+      if (!originals.has(uri.toString())) {
+        originals.set(uri.toString(), doc.getText());
+      }
+      const editor = await vscode.window.showTextDocument(doc);
+      const line = editor.document.lineAt(await lineOf(uri, needle));
+      await editor.edit(b => b.replace(line.range, line.text.replace(from, to)));
+      return editor.document;
+    }
+
+    test('runs the tests covering unsaved changes', async () => {
+      await editLine(sourceUri(), 'return a + b', 'a + b', 'b + a');
+      const done = fake.waitForRuns(1);
+      await vscode.commands.executeCommand('whatTheTest.runTestsForChanges');
+      await done;
+      assert.deepStrictEqual([...fake.ran].sort(), ['adds two numbers', 'sums a list']);
+    });
+
+    test('includes a test whose own code changed', async () => {
+      await editLine(sourceUri(), 'nobody calls me', 'nobody', 'no one');
+      await editLine(testUri(), 'sum([1, 2, 3])', '1, 2, 3', '3, 2, 1');
+      const done = fake.waitForRuns(1);
+      await vscode.commands.executeCommand('whatTheTest.runTestsForChanges');
+      await done;
+      assert.deepStrictEqual(fake.ran, ['sums a list']);
+    });
+
+    test('runs the tests covering a save when runTestsOnSave is on', async () => {
+      await vscode.workspace.getConfiguration('whatTheTest').update('runTestsOnSave', true, vscode.ConfigurationTarget.Global);
+      const doc = await editLine(sourceUri(), 'return a + b', 'a + b', 'b + a');
+      const done = fake.waitForRuns(1);
+      await doc.save();
+      await done;
+      assert.deepStrictEqual([...fake.ran].sort(), ['adds two numbers', 'sums a list']);
+    });
+
+    test('compares saved files with the last commit', async function () {
+      const git = vscode.extensions.getExtension<any>('vscode.git'); // eslint-disable-line @typescript-eslint/no-explicit-any
+      const api = git && (await git.activate()).getAPI(1);
+      // The fixture is a subfolder of this repository, which VS Code doesn't open by default.
+      const repo = api && await api.openRepository(vscode.Uri.joinPath(workspace(), '../..'));
+      if (!repo) {
+        this.skip();
+      }
+      const doc = await editLine(sourceUri(), 'return a + b', 'a + b', 'b + a');
+      await doc.save();
+      await waitFor('Git to see the change', async () =>
+        repo.state.workingTreeChanges.some((c: { uri: vscode.Uri }) => c.uri.toString() === sourceUri().toString()) || undefined);
+      const done = fake.waitForRuns(1);
+      await vscode.commands.executeCommand('whatTheTest.runTestsForChanges');
+      await done;
+      assert.deepStrictEqual([...fake.ran].sort(), ['adds two numbers', 'sums a list']);
+    });
+  });
 });

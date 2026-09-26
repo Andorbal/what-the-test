@@ -14,6 +14,12 @@ All notable changes to What the Test are documented here. The format follows
   "Run All" and "Debug All" still run the whole list.
 - **Pin** button in the Tests Covering Line view (and `Pin Tests Covering Line`
   / `Unpin Tests Covering Line` commands) to stop the list from following the cursor.
+- `Run Tests Covering Changes`, `Debug Tests Covering Changes` and
+  `Show Tests Covering Changes`: find the tests that reach code changed since
+  the last commit (including unsaved edits) and run them together. Also in the
+  Source Control view's `…` menu.
+- `whatTheTest.runTestsOnSave` setting (off by default): after each save, run
+  the tests covering the lines that changed.
 
 ### Fixed
 

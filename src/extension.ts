@@ -4,6 +4,7 @@ import { CoveringTest, CoveringTestFinder, LineTestsResult } from './core/coveri
 import { LanguageAdapter } from './core/languageAdapter';
 import { RunMode, TestingBridge } from './core/testingBridge';
 import { builtInAdapters } from './languages';
+import { ChangedTestsCommands } from './ui/changedTestsCommands';
 import { noTestsMessage } from './ui/format';
 import { LineIndicators } from './ui/indicators';
 import { LineTestsService } from './ui/lineTestsService';
@@ -27,7 +28,10 @@ export function activate(context: vscode.ExtensionContext): WhatTheTestApi {
   const finder = new CoveringTestFinder(registry);
   const bridge = new TestingBridge(log);
   const service = new LineTestsService(registry, finder);
-  context.subscriptions.push(log, registry, service, new LineIndicators(service), new LineTestsTreeView(service));
+  context.subscriptions.push(
+    log, registry, service, new LineIndicators(service), new LineTestsTreeView(service),
+    new ChangedTestsCommands(registry, finder, bridge, log),
+  );
 
   /** The result for the active line, computing it if the cached one is stale. */
   const currentResult = async (): Promise<LineTestsResult | undefined> => {

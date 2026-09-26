@@ -45,6 +45,15 @@ and [CHANGELOG.md](CHANGELOG.md) for what changed.
   to open it, use the item buttons to run or debug it, or choose *Run all* / *Debug all*.
 - **Commands**: `Run All Tests Covering Line` and `Debug All Tests Covering Line`
   (editor context menu and Command Palette).
+- **Tests covering your changes**: `Run Tests Covering Changes`,
+  `Debug Tests Covering Changes` and `Show Tests Covering Changes` (Command
+  Palette, the Source Control view's `…` menu and the Tests Covering Line
+  view's `…` menu) find the tests that reach anything you changed since the
+  last commit, including unsaved edits, and run them in one go. A test whose
+  own code changed is included too. Outside a Git repository, only unsaved
+  edits count.
+- **Run on save** (off by default, `whatTheTest.runTestsOnSave`): after each
+  save, runs the tests that cover the lines that save changed.
 
 Each test entry says how it reaches the line, for example *calls it directly*
 or *via Calculator.Sum → Parse*.
@@ -106,6 +115,7 @@ example C# Dev Kit, Jest, Vitest or Mocha Test Explorer).
 | `whatTheTest.maxSearchDepth` | `8` | Levels of callers to walk. |
 | `whatTheTest.maxVisitedSymbols` | `400` | Maximum symbols visited per line. |
 | `whatTheTest.debounceMs` | `400` | Delay after the cursor stops before searching. |
+| `whatTheTest.runTestsOnSave` | `false` | After saving a file, run the tests covering the lines that changed. |
 | `whatTheTest.csharp.additionalTestAttributes` | `[]` | Extra attributes that mark a C# test method. |
 | `whatTheTest.javascript.additionalTestFunctions` | `[]` | Extra JS/TS functions that declare a test. |
 | `whatTheTest.javascript.additionalSuiteFunctions` | `[]` | Extra JS/TS functions that declare a suite. |
@@ -161,6 +171,9 @@ src/
     adapterRegistry.ts         registered adapters + parsed test file cache
     coveringTestFinder.ts      call-graph walk that finds the tests reaching a line
     idMatching.ts              matches parsed tests to VS Code test item IDs
+    lineDiff.ts                line diff used to find changed lines
+    changedCode.ts             uncommitted and unsaved changes (via the built-in Git extension)
+    changedTests.ts            finds the tests covering a set of changed lines
     testingBridge.ts           runs/debugs/reveals tests through VS Code's Testing API
   languages/
     text.ts                    shared scanning helpers
