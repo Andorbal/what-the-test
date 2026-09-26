@@ -13,13 +13,15 @@ interface LanguageSuite {
 
 /**
  * End-to-end tests against real language servers, installed from the
- * Marketplace. Each needs its toolchain on PATH (the .NET SDK for C# and F#).
+ * Marketplace. Each needs its toolchain on PATH (the .NET SDK for C# and F#,
+ * Go and gopls for Go).
  *
- *   node runLanguageTests.js <csharp|fsharp>
+ *   node runLanguageTests.js <csharp|fsharp|go>
  */
 const SUITES: Record<string, LanguageSuite> = {
   csharp: { fixture: 'csharp-project', extensions: ['ms-dotnettools.csharp'], build: ['dotnet', 'build'] },
   fsharp: { fixture: 'fsharp-project', extensions: ['ionide.ionide-fsharp'], build: ['dotnet', 'build'] },
+  go: { fixture: 'go-project', extensions: ['golang.go'] },
 };
 
 async function main(): Promise<void> {

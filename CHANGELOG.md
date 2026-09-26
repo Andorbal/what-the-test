@@ -14,6 +14,11 @@ All notable changes to What the Test are documented here. The format follows
   Expecto `testList` / `testCase` / `test` declarations. Uses Ionide's
   language server; tests run through Ionide's or any other .NET test controller.
   New setting `whatTheTest.fsharp.additionalTestAttributes`.
+- Go support: `TestXxx`, `BenchmarkXxx`, `FuzzXxx` and `ExampleXxx`
+  functions, `t.Run` subtests with literal names, and testify suite methods
+  (with `SetupTest` and friends as setup). Uses gopls; tests run through the
+  Go extension. A subtest that hasn't run yet (so has no test item) runs
+  through its parent test.
 - The Tests Covering Line view keeps its list when you go into one of the
   listed tests, and selects that test, so you can go through them one by one.
   "Run All" and "Debug All" still run the whole list.

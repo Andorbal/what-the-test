@@ -28,6 +28,14 @@ jobs:
         run: xvfb-run -a npm run test:integration:csharp
       - name: Integration tests (F#)
         run: xvfb-run -a npm run test:integration:fsharp
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+      - name: Install gopls
+        run: go install golang.org/x/tools/gopls@latest
+      - name: Integration tests (Go)
+        run: xvfb-run -a npm run test:integration:go
 
   package:
     runs-on: ubuntu-latest

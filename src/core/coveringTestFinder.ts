@@ -398,9 +398,14 @@ export class CoveringTestFinder {
 /**
  * Language servers decorate names differently; strip parameter lists and
  * return types, e.g. Roslyn's `Calculator.Sum(IEnumerable<int>)` or
- * `Add(int, int) : int`, and F# self-identifiers such as `this.Sum`.
+ * `Add(int, int) : int`, F# self-identifiers such as `this.Sum`, and Go
+ * receivers such as `(*Square).Area`.
  */
 export function displayName(name: string): string {
+  const receiver = /^\(\*?([\w.]+)(?:\[[^\]]*\])?\)\.(\w+)/.exec(name);
+  if (receiver) {
+    return `${receiver[1]}.${receiver[2]}`;
+  }
   const paren = name.indexOf('(');
   return (paren > 0 ? name.slice(0, paren) : name).trim().replace(/^(?:this|self|_|__|x)\./, '');
 }
