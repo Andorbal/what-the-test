@@ -5,6 +5,11 @@ export function pluralTests(count: number): string {
   return `${count} ${count === 1 ? 'test' : 'tests'}`;
 }
 
+/** The verb that follows {@link pluralTests}: `1 test covers`, `2 tests cover`. */
+export function covers(count: number): string {
+  return count === 1 ? 'covers' : 'cover';
+}
+
 /** e.g. `Calculator › add › adds two numbers` (without the namespace for C#). */
 export function testTitle(test: CoveringTest): string {
   const path = test.declaration.path;

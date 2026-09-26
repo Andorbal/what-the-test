@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { CoveringTest, LineTestsResult } from '../core/coveringTestFinder';
 import { RunMode, TestingBridge } from '../core/testingBridge';
-import { pluralTests, testLocation, testReach, testTitle } from './format';
+import { covers, pluralTests, testLocation, testReach, testTitle } from './format';
 
 interface TestPickItem extends vscode.QuickPickItem {
   test?: CoveringTest;
@@ -36,7 +36,7 @@ export async function showLineTestsQuickPick(result: LineTestsResult, bridge: Te
   ];
 
   const pick = vscode.window.createQuickPick<TestPickItem>();
-  pick.title = `${pluralTests(count)}${result.truncated ? '+' : ''} cover line ${result.line + 1}${result.symbolName ? ` (${result.symbolName})` : ''}`;
+  pick.title = `${pluralTests(count)}${result.truncated ? '+' : ''} ${covers(count)} line ${result.line + 1}${result.symbolName ? ` (${result.symbolName})` : ''}`;
   pick.placeholder = 'Select a test to open it, or use the buttons to run or debug it';
   pick.items = items;
   pick.matchOnDescription = true;

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { LineTestsService, LineTestsState } from './lineTestsService';
-import { pluralTests } from './format';
+import { covers, pluralTests } from './format';
 
 /** The status bar item and the hint shown at the end of the current line. */
 export class LineIndicators implements vscode.Disposable {
@@ -50,7 +50,7 @@ export class LineIndicators implements vscode.Disposable {
       const count = result.tests.length;
       this.statusBar.text = `$(beaker) ${count}${result.truncated ? '+' : ''}`;
       this.statusBar.tooltip = count
-        ? `${pluralTests(count)} cover line ${result.line + 1}${result.symbolName ? ` (${result.symbolName})` : ''}. Click to show, go to or run them.`
+        ? `${pluralTests(count)} ${covers(count)} line ${result.line + 1}${result.symbolName ? ` (${result.symbolName})` : ''}. Click to show, go to or run them.`
         : `No tests found that cover line ${result.line + 1}.`;
     }
     this.statusBar.show();

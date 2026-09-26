@@ -18,6 +18,7 @@ All notable changes to What the Test are documented here. The format follows
 
 - TypeScript/JavaScript: when several tests in one file call the code, all of
   them are found, not only the first.
+- Messages about a single test say "1 test covers line …" instead of "1 test cover line …".
 
 ## [0.1.0] - 2026-09-25
 
