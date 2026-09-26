@@ -78,6 +78,12 @@ walk continues through the caller.
   `[TestInitialize]`, an xUnit constructor, ...): the enclosing suite covers it.
 - Helper functions in test files are walked through like any other caller, so
   a line in a helper lists the tests that use it.
+- Calls through an interface or a base class count. For a method, the walk
+  also follows the callers of the interface and base-class members it
+  implements or overrides (found with the language server's *Type Hierarchy*),
+  so code that is only reached through dependency injection is covered too.
+  Only supertypes declared in the workspace are followed. TypeScript's call
+  hierarchy already includes these calls.
 - The walk is bounded by `whatTheTest.maxSearchDepth` and
   `whatTheTest.maxVisitedSymbols`. A `+` after the count means a limit was hit.
 
@@ -85,9 +91,10 @@ The language servers do the semantic work, so no build or test run is needed:
 the TypeScript server built into VS Code, and Roslyn from the C# extension. Each
 language adapter only needs to recognise which parts of a test file are tests.
 
-> This is *reachability*, not runtime coverage. Calls through interfaces,
-> dependency injection, reflection or dynamic dispatch may not show up, and a
-> call on a branch the test never takes still counts.
+> This is *reachability*, not runtime coverage. Calls through reflection,
+> duck typing or other dynamic dispatch the language server can't see don't
+> show up, and a call on a branch the test never takes still counts. A call
+> through an interface counts for every implementation of it.
 
 ### Running tests: VS Code's Testing API
 

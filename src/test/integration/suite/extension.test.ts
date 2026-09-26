@@ -148,6 +148,19 @@ suite('What the Test', () => {
     assert.deepStrictEqual(result.tests.map(t => t.declaration.name), ['upper-cases the text', 'adds an exclamation mark']);
   });
 
+  test('follows calls through interfaces and base classes', async () => {
+    const uri = vscode.Uri.joinPath(workspace(), 'src/shapes.ts');
+    const doc = await vscode.workspace.openTextDocument(uri);
+    const result = await waitFor('covering tests', async () => {
+      const r = await api.findTestsForLine(doc, await lineOf(uri, 'this.side * this.side'));
+      return r.tests.length >= 2 ? r : undefined;
+    });
+    assert.deepStrictEqual(result.tests.map(t => [t.declaration.name, t.via.join(',')]), [
+      ['adds up areas', 'totalArea'],
+      ['describes a polygon', 'describe'],
+    ]);
+  });
+
   test('reports no tests for uncovered code', async () => {
     const doc = await vscode.workspace.openTextDocument(sourceUri());
     const result = await api.findTestsForLine(doc, await lineOf(sourceUri(), 'nobody calls me'));

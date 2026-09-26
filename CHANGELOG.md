@@ -21,6 +21,13 @@ All notable changes to What the Test are documented here. The format follows
 - `whatTheTest.runTestsOnSave` setting (off by default): after each save, run
   the tests covering the lines that changed.
 
+### Changed
+
+- Calls through interfaces and base classes are followed: the callers of the
+  interface and base-class members a method implements or overrides count as
+  its callers (using the language server's type hierarchy). In C#, these tests
+  used to be found only when nothing called the method directly.
+
 ### Fixed
 
 - The view's **Refresh** button now discards cached results, so it picks up
