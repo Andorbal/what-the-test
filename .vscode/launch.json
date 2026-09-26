@@ -40,6 +40,14 @@
       "args": ["--extensionDevelopmentPath=${workspaceFolder}", "${workspaceFolder}/test-fixtures/go-project"],
       "outFiles": ["${workspaceFolder}/out/**/*.js"],
       "preLaunchTask": "npm: watch"
+    },
+    {
+      "name": "Run Extension (Python fixture)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}", "${workspaceFolder}/test-fixtures/python-project"],
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "npm: watch"
     }
   ]
 }

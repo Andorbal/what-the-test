@@ -36,6 +36,13 @@ jobs:
         run: go install golang.org/x/tools/gopls@latest
       - name: Integration tests (Go)
         run: xvfb-run -a npm run test:integration:go
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pytest
+        run: python -m pip install pytest
+      - name: Integration tests (Python)
+        run: xvfb-run -a npm run test:integration:python
 
   package:
     runs-on: ubuntu-latest

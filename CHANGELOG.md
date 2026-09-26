@@ -19,6 +19,10 @@ All notable changes to What the Test are documented here. The format follows
   (with `SetupTest` and friends as setup). Uses gopls; tests run through the
   Go extension. A subtest that hasn't run yet (so has no test item) runs
   through its parent test.
+- Python support: pytest `test*` functions and `Test*` classes, unittest
+  `TestCase` classes, their setup methods, autouse fixtures and module-level
+  setup. Regular pytest fixtures are followed to the tests that request them.
+  Uses Pylance; tests run through the Python extension.
 - The Tests Covering Line view keeps its list when you go into one of the
   listed tests, and selects that test, so you can go through them one by one.
   "Run All" and "Debug All" still run the whole list.

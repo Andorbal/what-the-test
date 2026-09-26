@@ -23,6 +23,7 @@
     "dotnet",
     "fsharp",
     "go",
+    "python",
     "typescript",
     "javascript"
   ],
@@ -34,7 +35,8 @@
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
     "onLanguage:javascript",
-    "onLanguage:javascriptreact"
+    "onLanguage:javascriptreact",
+    "onLanguage:python"
   ],
   "contributes": {
     "commands": [
@@ -123,7 +125,7 @@
     "viewsWelcome": [
       {
         "view": "whatTheTest.lineTests",
-        "contents": "Place the cursor on a line of C#, F#, Go, TypeScript or JavaScript code to see the tests that exercise it."
+        "contents": "Place the cursor on a line of C#, F#, Go, Python, TypeScript or JavaScript code to see the tests that exercise it."
       }
     ],
     "menus": {
@@ -353,6 +355,7 @@
     "test:integration:csharp": "npm run compile && node ./out/test/integration/runLanguageTests.js csharp",
     "test:integration:fsharp": "npm run compile && node ./out/test/integration/runLanguageTests.js fsharp",
     "test:integration:go": "npm run compile && node ./out/test/integration/runLanguageTests.js go",
+    "test:integration:python": "npm run compile && node ./out/test/integration/runLanguageTests.js python",
     "test": "npm run test:unit && npm run test:integration",
     "package": "node scripts/package.mjs",
     "screenshots": "node scripts/screenshots/record.mjs",
