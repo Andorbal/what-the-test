@@ -58,6 +58,21 @@ suite('What the Test (C#)', () => {
     ]);
   });
 
+  test('follows calls through interfaces and base classes', async () => {
+    // Square.Area is also called directly (by the untested IsLarge), so the
+    // tests are only found through the members it implements and overrides.
+    const uri = vscode.Uri.joinPath(workspace(), 'src/Calc/Shapes.cs');
+    const doc = await vscode.workspace.openTextDocument(uri);
+    const result = await waitFor('covering tests', async () => {
+      const r = await api.findTestsForLine(doc, await lineOf(uri, 'return _side * _side'));
+      return r.tests.length >= 2 ? r : undefined;
+    }, 60_000);
+    assert.deepStrictEqual(result.tests.map(t => [t.declaration.name, t.distance, t.via.join(',')]), [
+      ['TotalArea_AddsUpAreas', 2, 'Shapes.TotalArea,IShape.Area'],
+      ['Describe_IncludesArea', 2, 'Polygon.Describe,Polygon.Area'],
+    ]);
+  });
+
   test('reports no tests for uncovered C#', async () => {
     const doc = await vscode.workspace.openTextDocument(sourceUri());
     const result = await api.findTestsForLine(doc, await lineOf(sourceUri(), 'nobody calls me'));

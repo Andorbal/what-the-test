@@ -21,22 +21,33 @@ export async function showLineTestsQuickPick(result: LineTestsResult, bridge: Te
     void vscode.window.showInformationMessage(noTestsMessage(result));
     return;
   }
+  const title = `${pluralTests(count)}${result.truncated ? '+' : ''} ${covers(count)} line ${result.line + 1}${result.symbolName ? ` (${result.symbolName})` : ''}`;
+  await showTestsQuickPick(result.tests, title, testReach, bridge);
+}
 
+/** Lists tests to open, run or debug, with `detail` explaining why each one is listed. */
+export async function showTestsQuickPick(
+  tests: readonly CoveringTest[],
+  title: string,
+  detail: (test: CoveringTest) => string,
+  bridge: TestingBridge,
+): Promise<void> {
+  const count = tests.length;
   const items: TestPickItem[] = [
     { label: `$(run-all) Run all ${pluralTests(count)}`, runAll: 'run' },
     { label: `$(debug-alt) Debug all ${pluralTests(count)}`, runAll: 'debug' },
     { label: 'Tests', kind: vscode.QuickPickItemKind.Separator },
-    ...result.tests.map((test): TestPickItem => ({
+    ...tests.map((test): TestPickItem => ({
       label: `$(${test.declaration.kind === 'suite' ? 'symbol-namespace' : 'beaker'}) ${testTitle(test)}`,
       description: testLocation(test),
-      detail: testReach(test),
+      detail: detail(test),
       buttons: [RUN_BUTTON, DEBUG_BUTTON],
       test,
     })),
   ];
 
   const pick = vscode.window.createQuickPick<TestPickItem>();
-  pick.title = `${pluralTests(count)}${result.truncated ? '+' : ''} ${covers(count)} line ${result.line + 1}${result.symbolName ? ` (${result.symbolName})` : ''}`;
+  pick.title = title;
   pick.placeholder = 'Select a test to open it, or use the buttons to run or debug it';
   pick.items = items;
   pick.matchOnDescription = true;
@@ -52,7 +63,7 @@ export async function showLineTestsQuickPick(result: LineTestsResult, bridge: Te
 
   const originalEditor = vscode.window.activeTextEditor;
   const originalSelection = originalEditor?.selection;
-  let action: (() => Promise<void>) | undefined;
+  let action: (() => Promise<unknown>) | undefined;
   /** True once the user chose to open a test, so we shouldn't return to the original editor. */
   let navigated = false;
 
@@ -69,7 +80,7 @@ export async function showLineTestsQuickPick(result: LineTestsResult, bridge: Te
       const test = item?.test;
       const mode = item?.runAll;
       if (mode) {
-        action = () => bridge.run(result.tests, mode);
+        action = () => bridge.run(tests, mode);
       } else if (test) {
         navigated = true;
         action = () => bridge.reveal(test);

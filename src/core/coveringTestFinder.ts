@@ -57,7 +57,16 @@ interface Node {
   /** Call hierarchy item, if the language server provided one. */
   item?: vscode.CallHierarchyItem;
   depth: number;
-  via: string[];
+  /** The `via` of tests that call this node: the functions between them and the line, nearest to the test first. */
+  callerVia: string[];
+}
+
+/** A member of a supertype that a method implements or overrides. */
+interface Abstraction {
+  uri: vscode.Uri;
+  position: vscode.Position;
+  /** e.g. `IShape.Area`. */
+  name: string;
 }
 
 /**
@@ -68,17 +77,21 @@ interface Node {
  *
  * This is a static approximation of coverage: it works without running
  * anything and for every language whose extension provides call hierarchy or
- * references, which covers C# (C# / C# Dev Kit) and TS/JS (built in).
+ * references (TypeScript's built-in server, Roslyn, FsAutoComplete, gopls,
+ * JDT and Pylance all do).
  */
 export class CoveringTestFinder {
   private readonly symbolCache = new Map<string, { version: number; symbols: vscode.DocumentSymbol[] }>();
   private readonly resultCache = new Map<string, LineTestsResult>();
+  /** Workspace supertypes of a type (by its location), all the way up. */
+  private readonly supertypeCache = new Map<string, Promise<vscode.TypeHierarchyItem[]>>();
 
   constructor(private readonly registry: AdapterRegistry) {}
 
   clearCache(): void {
     this.symbolCache.clear();
     this.resultCache.clear();
+    this.supertypeCache.clear();
     this.registry.clearCache();
   }
 
@@ -133,26 +146,30 @@ export class CoveringTestFinder {
   ): Promise<boolean> {
     const visited = new Set<string>();
     const queue: Node[] = [];
-    const enqueue = async (node: Omit<Node, 'item'>) => {
+    /**
+     * Queues a symbol whose callers should be searched. `parentVia` is the
+     * `via` of tests that call the node it was found from; `label` replaces
+     * the language server's name for the symbol.
+     */
+    const enqueue = async (node: Omit<Node, 'item' | 'callerVia'>, parentVia: string[] | undefined, label?: string) => {
+      const add = (n: Omit<Node, 'callerVia'>) => {
+        const key = `${n.uri}#${n.position.line}:${n.position.character}`;
+        if (!visited.has(key)) {
+          visited.add(key);
+          queue.push({ ...n, callerVia: parentVia ? [label ?? displayName(n.name), ...parentVia] : [] });
+        }
+      };
       const items = await this.prepareCallHierarchy(node.uri, node.position);
       if (items.length) {
         for (const item of items) {
-          const key = `${item.uri}#${item.selectionRange.start.line}:${item.selectionRange.start.character}`;
-          if (!visited.has(key)) {
-            visited.add(key);
-            queue.push({ ...node, uri: item.uri, position: item.selectionRange.start, name: item.name, item });
-          }
+          add({ ...node, uri: item.uri, position: item.selectionRange.start, name: item.name, item });
         }
       } else {
-        const key = `${node.uri}#${node.position.line}:${node.position.character}`;
-        if (!visited.has(key)) {
-          visited.add(key);
-          queue.push(node);
-        }
+        add(node);
       }
     };
 
-    await enqueue({ uri, position: symbol.selectionRange.start, name: symbol.name, depth: 0, via: [] });
+    await enqueue({ uri, position: symbol.selectionRange.start, name: symbol.name, depth: 0 }, undefined);
 
     while (queue.length) {
       if (token.isCancellationRequested) {
@@ -162,8 +179,12 @@ export class CoveringTestFinder {
         return true;
       }
       const node = queue.shift()!;
-      // Functions between a caller of this node and the original line.
-      const via = node.depth === 0 ? [] : [displayName(node.name), ...node.via];
+      const via = node.callerVia;
+      // Calls through an interface or base class may reach this method too:
+      // search the callers of the members it implements or overrides.
+      for (const abstraction of await this.abstractions(node)) {
+        await enqueue({ uri: abstraction.uri, position: abstraction.position, name: abstraction.name, depth: node.depth }, via, abstraction.name);
+      }
       const callSites = await this.callSites(node);
       for (const site of callSites) {
         if (token.isCancellationRequested) {
@@ -199,19 +220,79 @@ export class CoveringTestFinder {
             visited.add(key);
             queue.push({
               uri: site.caller.uri, position: site.caller.selectionRange.start, name: site.caller.name,
-              item: site.caller, depth: node.depth + 1, via,
+              item: site.caller, depth: node.depth + 1, callerVia: [displayName(site.caller.name), ...via],
             });
           }
         } else {
           // A plain reference: continue from whatever symbol contains it.
           const container = await this.enclosingSymbol(doc, site.ranges[0].start);
           if (container) {
-            await enqueue({ uri: site.uri, position: container.selectionRange.start, name: container.name, depth: node.depth + 1, via });
+            await enqueue({ uri: site.uri, position: container.selectionRange.start, name: container.name, depth: node.depth + 1 }, via);
           }
         }
       }
     }
     return false;
+  }
+
+  /**
+   * The members of the node's supertypes (in the workspace) that it
+   * implements or overrides: those with the same name. Uses the language
+   * server's type hierarchy; returns nothing if there is none, as for
+   * TypeScript, whose call hierarchy already includes calls through
+   * interfaces and base classes.
+   */
+  private async abstractions(node: Node): Promise<Abstraction[]> {
+    const doc = await this.openDocument(node.uri);
+    if (!doc) {
+      return [];
+    }
+    const owner = memberAndType(await this.documentSymbols(doc), node.position);
+    if (!owner) {
+      return [];
+    }
+    const memberName = displayName(owner.member.name);
+    const result: Abstraction[] = [];
+    for (const supertype of await this.supertypes(doc.uri, owner.type.selectionRange.start)) {
+      const superDoc = await this.openDocument(supertype.uri);
+      const superSymbols = superDoc ? await this.documentSymbols(superDoc) : [];
+      const type = findSymbol(superSymbols, s => TYPE_KINDS.has(s.kind) && s.selectionRange.contains(supertype.selectionRange.start));
+      for (const member of type?.children ?? []) {
+        if (MEMBER_KINDS.has(member.kind) && displayName(member.name) === memberName) {
+          result.push({ uri: supertype.uri, position: member.selectionRange.start, name: `${displayName(supertype.name)}.${memberName}` });
+        }
+      }
+    }
+    return result;
+  }
+
+  /** All supertypes of the type at a position that are declared in the workspace. */
+  private supertypes(uri: vscode.Uri, position: vscode.Position): Promise<vscode.TypeHierarchyItem[]> {
+    const key = `${uri}#${position.line}:${position.character}`;
+    let cached = this.supertypeCache.get(key);
+    if (!cached) {
+      cached = (async () => {
+        const found = new Map<string, vscode.TypeHierarchyItem>();
+        let level = await this.execute<vscode.TypeHierarchyItem[]>('vscode.prepareTypeHierarchy', uri, position);
+        for (let depth = 0; depth < 10 && level.length; depth++) {
+          const next: vscode.TypeHierarchyItem[] = [];
+          for (const item of level) {
+            for (const supertype of await this.execute<vscode.TypeHierarchyItem[]>('vscode.provideSupertypes', item)) {
+              const superKey = `${supertype.uri}#${supertype.selectionRange.start.line}:${supertype.selectionRange.start.character}`;
+              // Types outside the workspace (System.Object, IDisposable, ...) have far too many callers to be useful.
+              if (!found.has(superKey) && vscode.workspace.getWorkspaceFolder(supertype.uri)) {
+                found.set(superKey, supertype);
+                next.push(supertype);
+              }
+            }
+          }
+          level = next;
+        }
+        return [...found.values()];
+      })();
+      this.supertypeCache.set(key, cached);
+    }
+    return cached;
   }
 
   /** Places that call (or reference) the node's symbol. */
@@ -318,16 +399,56 @@ export class CoveringTestFinder {
 /**
  * Language servers decorate names differently; strip parameter lists and
  * return types, e.g. Roslyn's `Calculator.Sum(IEnumerable<int>)` or
- * `Add(int, int) : int`.
+ * `Add(int, int) : int`, F# self-identifiers such as `this.Sum`, and Go
+ * receivers such as `(*Square).Area`.
  */
 export function displayName(name: string): string {
+  const receiver = /^\(\*?([\w.]+)(?:\[[^\]]*\])?\)\.(\w+)/.exec(name);
+  if (receiver) {
+    return `${receiver[1]}.${receiver[2]}`;
+  }
   const paren = name.indexOf('(');
-  return (paren > 0 ? name.slice(0, paren) : name).trim();
+  return (paren > 0 ? name.slice(0, paren) : name).trim().replace(/^(?:this|self|_|__|x)\./, '');
 }
 
 /** TypeScript names anonymous functions after their call site, e.g. `describe('x') callback`. */
 function isAnonymousCallback(name: string): boolean {
   return /\bcallback$/.test(name) || name === '<function>' || name === '<anonymous>';
+}
+
+/** The member whose name is at `position`, and the innermost type that contains it. */
+function memberAndType(symbols: readonly vscode.DocumentSymbol[], position: vscode.Position): { member: vscode.DocumentSymbol; type: vscode.DocumentSymbol } | undefined {
+  for (const symbol of symbols) {
+    if (!symbol.range.contains(position)) {
+      continue;
+    }
+    if (TYPE_KINDS.has(symbol.kind)) {
+      const nested = memberAndType(symbol.children ?? [], position);
+      if (nested) {
+        return nested;
+      }
+      const member = symbol.children?.find(c => MEMBER_KINDS.has(c.kind) && c.selectionRange.contains(position));
+      return member && { member, type: symbol };
+    }
+    const nested = memberAndType(symbol.children ?? [], position);
+    if (nested) {
+      return nested;
+    }
+  }
+  return undefined;
+}
+
+function findSymbol(symbols: readonly vscode.DocumentSymbol[], predicate: (symbol: vscode.DocumentSymbol) => boolean): vscode.DocumentSymbol | undefined {
+  for (const symbol of symbols) {
+    if (predicate(symbol)) {
+      return symbol;
+    }
+    const nested = findSymbol(symbol.children ?? [], predicate);
+    if (nested) {
+      return nested;
+    }
+  }
+  return undefined;
 }
 
 function symbolInformationToDocumentSymbol(info: vscode.SymbolInformation): vscode.DocumentSymbol {

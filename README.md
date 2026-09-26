@@ -12,6 +12,10 @@ Supported out of the box:
 | Language | Test frameworks recognised | Runs through |
 | --- | --- | --- |
 | C# / .NET | xUnit, NUnit, MSTest, TUnit, FsCheck | C# Dev Kit or any other .NET test controller |
+| F# | xUnit, NUnit, MSTest, FsCheck, Expecto | Ionide, C# Dev Kit or any other .NET test controller |
+| Go | `go test` tests, benchmarks, fuzz tests, examples, `t.Run` subtests, testify suites | Go extension |
+| Java | JUnit 5 (incl. `@Nested`), JUnit 4, TestNG, jqwik | Test Runner for Java |
+| Python | pytest (functions, `Test*` classes, fixtures), unittest | Python extension |
 | TypeScript / JavaScript (incl. JSX/TSX) | Jest, Vitest, Mocha (BDD & TDD), Jasmine, `node:test`, Playwright, Bun | Jest, Vitest, Mocha Test Explorer, Playwright, ... |
 
 Other languages can be added by implementing a small adapter (see
@@ -36,17 +40,47 @@ and [CHANGELOG.md](CHANGELOG.md) for what changed.
 - **Status bar**: a beaker icon and the test count for the current line. Click it to open the test list.
 - **Tests Covering Line view** in the Testing side bar: lists the tests for the
   current line, each with **Run**, **Debug** and **Go to Test** buttons, and
-  **Run All**, **Debug All** and **Refresh** in the view title.
+  **Run All**, **Debug All**, **Refresh** and **Pin** in the view title.
+  When you go into one of the listed tests, the list stays and that test is
+  selected, so you can go through them one by one. **Pin** keeps the list
+  wherever the cursor goes, until you unpin it.
 - **Quick pick** (`What the Test: Show Tests Covering Line`, also in the editor
   context menu): previews each test as you move through the list. Pick a test
   to open it, use the item buttons to run or debug it, or choose *Run all* / *Debug all*.
 - **Commands**: `Run All Tests Covering Line` and `Debug All Tests Covering Line`
   (editor context menu and Command Palette).
+- **Tests covering your changes**: `Run Tests Covering Changes`,
+  `Debug Tests Covering Changes` and `Show Tests Covering Changes` (Command
+  Palette, the Source Control view's `…` menu and the Tests Covering Line
+  view's `…` menu) find the tests that reach anything you changed since the
+  last commit, including unsaved edits, and run them in one go. A test whose
+  own code changed is included too. Outside a Git repository, only unsaved
+  edits count.
+- **Run on save** (off by default, `whatTheTest.runTestsOnSave`): after each
+  save, runs the tests that cover the lines that save changed.
 
 Each test entry says how it reaches the line, for example *calls it directly*
 or *via Calculator.Sum → Parse*.
 
 <img src="docs/images/quick-pick.png" width="602" alt="Quick pick titled '7 tests cover line 23 (roundCents)', listing Run all, Debug all and each test with how it reaches the line, such as 'via subtotal → lineTotal'.">
+
+### Keyboard shortcuts
+
+They follow VS Code's own test shortcuts (`Ctrl+; C` runs the test at the
+cursor): the letter runs, `Ctrl` + the letter debugs. On macOS, use `Cmd`
+instead of `Ctrl`.
+
+| Shortcut | Command |
+| --- | --- |
+| `Ctrl+; W` | Run All Tests Covering Line |
+| `Ctrl+; Ctrl+W` | Debug All Tests Covering Line |
+| `Ctrl+; Shift+W` | Show Tests Covering Line |
+| `Ctrl+; G` | Run Tests Covering Changes |
+| `Ctrl+; Ctrl+G` | Debug Tests Covering Changes |
+| `Ctrl+; Shift+G` | Show Tests Covering Changes |
+
+The line shortcuts work in an editor of a supported language and in the Tests
+Covering Line view.
 
 ## How it works
 
@@ -66,16 +100,31 @@ walk continues through the caller.
   `[TestInitialize]`, an xUnit constructor, ...): the enclosing suite covers it.
 - Helper functions in test files are walked through like any other caller, so
   a line in a helper lists the tests that use it.
+- Calls through an interface or a base class count. For a method, the walk
+  also follows the callers of the interface and base-class members it
+  implements or overrides (found with the language server's *Type Hierarchy*),
+  so code that is only reached through dependency injection is covered too.
+  Only supertypes declared in the workspace are followed. TypeScript's call
+  hierarchy already includes these calls.
 - The walk is bounded by `whatTheTest.maxSearchDepth` and
   `whatTheTest.maxVisitedSymbols`. A `+` after the count means a limit was hit.
 
 The language servers do the semantic work, so no build or test run is needed:
-the TypeScript server built into VS Code, and Roslyn from the C# extension. Each
+the TypeScript server built into VS Code, Roslyn from the C# extension,
+FsAutoComplete from Ionide for F#, gopls from the Go extension, the Eclipse
+JDT language server from the Java extension and Pylance from the Python
+extension. Each
 language adapter only needs to recognise which parts of a test file are tests.
 
-> This is *reachability*, not runtime coverage. Calls through interfaces,
-> dependency injection, reflection or dynamic dispatch may not show up, and a
-> call on a branch the test never takes still counts.
+> **Python:** pytest fixtures are followed: code a fixture calls counts for
+> the tests that request the fixture. Pylance doesn't resolve calls made *on*
+> a fixture's value (`calculator.add(1, 2)`) unless the test's parameter has a
+> type annotation (`def test_add(calculator: Calculator)`).
+
+> This is *reachability*, not runtime coverage. Calls through reflection,
+> duck typing or other dynamic dispatch the language server can't see don't
+> show up, and a call on a branch the test never takes still counts. A call
+> through an interface counts for every implementation of it.
 
 ### Running tests: VS Code's Testing API
 
@@ -103,7 +152,10 @@ example C# Dev Kit, Jest, Vitest or Mocha Test Explorer).
 | `whatTheTest.maxSearchDepth` | `8` | Levels of callers to walk. |
 | `whatTheTest.maxVisitedSymbols` | `400` | Maximum symbols visited per line. |
 | `whatTheTest.debounceMs` | `400` | Delay after the cursor stops before searching. |
+| `whatTheTest.runTestsOnSave` | `false` | After saving a file, run the tests covering the lines that changed. |
 | `whatTheTest.csharp.additionalTestAttributes` | `[]` | Extra attributes that mark a C# test method. |
+| `whatTheTest.fsharp.additionalTestAttributes` | `[]` | Extra attributes that mark an F# test. |
+| `whatTheTest.java.additionalTestAnnotations` | `[]` | Extra annotations that mark a Java test method. |
 | `whatTheTest.javascript.additionalTestFunctions` | `[]` | Extra JS/TS functions that declare a test. |
 | `whatTheTest.javascript.additionalSuiteFunctions` | `[]` | Extra JS/TS functions that declare a suite. |
 
@@ -128,6 +180,10 @@ export interface LanguageAdapter {
 range, plus any setup regions. See the built-in adapters for examples:
 
 - C#: [csharpAdapter.ts](src/languages/csharp/csharpAdapter.ts) and [csharpTestParser.ts](src/languages/csharp/csharpTestParser.ts)
+- F#: [fsharpAdapter.ts](src/languages/fsharp/fsharpAdapter.ts) and [fsharpTestParser.ts](src/languages/fsharp/fsharpTestParser.ts)
+- Go: [goAdapter.ts](src/languages/go/goAdapter.ts) and [goTestParser.ts](src/languages/go/goTestParser.ts)
+- Java: [javaAdapter.ts](src/languages/java/javaAdapter.ts) and [javaTestParser.ts](src/languages/java/javaTestParser.ts) (shares the C# parser's structure)
+- Python: [pythonAdapter.ts](src/languages/python/pythonAdapter.ts) and [pythonTestParser.ts](src/languages/python/pythonTestParser.ts)
 - JS/TS: [javascriptAdapter.ts](src/languages/javascript/javascriptAdapter.ts) and [jsTestParser.ts](src/languages/javascript/jsTestParser.ts)
 
 The parsers are plain TypeScript with no `vscode` import, so you can unit test
@@ -158,10 +214,17 @@ src/
     adapterRegistry.ts         registered adapters + parsed test file cache
     coveringTestFinder.ts      call-graph walk that finds the tests reaching a line
     idMatching.ts              matches parsed tests to VS Code test item IDs
+    lineDiff.ts                line diff used to find changed lines
+    changedCode.ts             uncommitted and unsaved changes (via the built-in Git extension)
+    changedTests.ts            finds the tests covering a set of changed lines
     testingBridge.ts           runs/debugs/reveals tests through VS Code's Testing API
   languages/
     text.ts                    shared scanning helpers
     csharp/                    C# masking, parser and adapter
+    fsharp/                    F# masking, parser (attributes and Expecto) and adapter
+    go/                        Go masking, parser (tests, subtests, testify) and adapter
+    java/                      Java parser (annotations, on top of the C# parser) and adapter
+    python/                    Python masking, parser (pytest and unittest) and adapter
     javascript/                JS/TS masking, parser and adapter
   ui/                          status bar, inline hint, tree view, quick pick
   test/
@@ -170,6 +233,10 @@ src/
 test-fixtures/
   ts-project/                  small TS project used by the integration tests
   csharp-project/              small xUnit solution used by the C# integration tests
+  fsharp-project/              small xUnit + Expecto solution used by the F# integration tests
+  go-project/                  small Go module used by the Go integration tests
+  java-project/                small Maven + JUnit 5 project used by the Java integration tests
+  python-project/              small pytest + unittest project used by the Python integration tests
 ```
 
 ## Development
@@ -180,13 +247,17 @@ npm run compile
 npm run test:unit                 # parsers and ID matching, plain Node
 npm run test:integration          # in VS Code: TS language server + fake test controllers
 npm run test:integration:csharp   # in VS Code with the C# extension (needs the .NET SDK)
+npm run test:integration:fsharp   # in VS Code with Ionide (needs the .NET SDK)
+npm run test:integration:go       # in VS Code with the Go extension (needs Go and gopls)
+npm run test:integration:java     # in VS Code with the Java extensions (downloads Maven dependencies)
+npm run test:integration:python   # in VS Code with the Python extension (needs Python with pytest)
 npm run package                   # builds what-the-test-<version>.vsix
 npm run screenshots               # re-records the images in docs/images
 ```
 
 On Linux without a display, prefix the integration tests with `xvfb-run -a`.
 Press <kbd>F5</kbd> in VS Code to start an Extension Development Host. The
-launch configurations open the TS or C# fixture project.
+launch configurations open the TS, C#, F#, Go, Java or Python fixture project.
 
 The TypeScript integration tests register fake test controllers, one with
 name-based IDs and one with opaque IDs. They check that the right tests reach

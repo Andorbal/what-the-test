@@ -5,6 +5,56 @@ All notable changes to What the Test are documented here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); see
 [RELEASING.md](RELEASING.md) for how versions are chosen and released.
 
+## [Unreleased]
+
+### Added
+
+- F# support: xUnit, NUnit, MSTest and FsCheck tests (attributed `let`
+  bindings and members, including ``` ``double backtick`` ``` names) and
+  Expecto `testList` / `testCase` / `test` declarations. Uses Ionide's
+  language server; tests run through Ionide's or any other .NET test controller.
+  New setting `whatTheTest.fsharp.additionalTestAttributes`.
+- Go support: `TestXxx`, `BenchmarkXxx`, `FuzzXxx` and `ExampleXxx`
+  functions, `t.Run` subtests with literal names, and testify suite methods
+  (with `SetupTest` and friends as setup). Uses gopls; tests run through the
+  Go extension. A subtest that hasn't run yet (so has no test item) runs
+  through its parent test.
+- Java support: JUnit 5 (including `@Nested` classes), JUnit 4, TestNG and
+  jqwik tests, with `@BeforeEach` and friends and test class constructors as
+  setup. Uses the Java extension's language server; tests run through the
+  Test Runner for Java. New setting `whatTheTest.java.additionalTestAnnotations`.
+- Python support: pytest `test*` functions and `Test*` classes, unittest
+  `TestCase` classes, their setup methods, autouse fixtures and module-level
+  setup. Regular pytest fixtures are followed to the tests that request them.
+  Uses Pylance; tests run through the Python extension.
+- The Tests Covering Line view keeps its list when you go into one of the
+  listed tests, and selects that test, so you can go through them one by one.
+  "Run All" and "Debug All" still run the whole list.
+- **Pin** button in the Tests Covering Line view (and `Pin Tests Covering Line`
+  / `Unpin Tests Covering Line` commands) to stop the list from following the cursor.
+- `Run Tests Covering Changes`, `Debug Tests Covering Changes` and
+  `Show Tests Covering Changes`: find the tests that reach code changed since
+  the last commit (including unsaved edits) and run them together. Also in the
+  Source Control view's `…` menu.
+- `whatTheTest.runTestsOnSave` setting (off by default): after each save, run
+  the tests covering the lines that changed.
+- Keyboard shortcuts, next to VS Code's own test shortcuts: `Ctrl+; W` runs
+  the tests covering the line (`Ctrl+; Ctrl+W` debugs them, `Ctrl+; Shift+W`
+  lists them), and `Ctrl+; G` / `Ctrl+; Ctrl+G` / `Ctrl+; Shift+G` do the same
+  for the tests covering your changes. `Cmd` instead of `Ctrl` on macOS.
+
+### Changed
+
+- Calls through interfaces and base classes are followed: the callers of the
+  interface and base-class members a method implements or overrides count as
+  its callers (using the language server's type hierarchy). In C#, these tests
+  used to be found only when nothing called the method directly.
+
+### Fixed
+
+- The view's **Refresh** button now discards cached results, so it picks up
+  tests the language server hadn't indexed yet.
+
 ## [0.2.2]
 
 ### Changed

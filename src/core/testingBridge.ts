@@ -26,9 +26,14 @@ const TEST_ID_DELIMITER = '\0';
 export class TestingBridge {
   constructor(private readonly log: vscode.OutputChannel) {}
 
-  async run(tests: readonly CoveringTest[], mode: RunMode): Promise<void> {
+  /**
+   * Runs the tests in a single run where possible. With `moveCursor: false`,
+   * tests that can only be run with "Run Test at Cursor" are skipped rather
+   * than moving the cursor to them; they are returned.
+   */
+  async run(tests: readonly CoveringTest[], mode: RunMode, options: { moveCursor?: boolean } = {}): Promise<CoveringTest[]> {
     if (!tests.length) {
-      return;
+      return [];
     }
     const resolved = await this.resolveIds(tests);
     const ids = [...new Set([...resolved.values()].filter((id): id is string => !!id))];
@@ -38,9 +43,15 @@ export class TestingBridge {
       this.log.appendLine(`${mode} ${ids.length} test(s) by ID: ${ids.map(id => id.split(TEST_ID_DELIMITER).join(' › ')).join(', ')}`);
       await vscode.commands.executeCommand('vscode.runTestsById', PROFILE_GROUP[mode], ...ids);
     }
-    if (unresolved.length) {
-      await this.runAtLocations(unresolved, mode);
+    if (!unresolved.length) {
+      return [];
     }
+    if (options.moveCursor === false) {
+      this.log.appendLine(`Skipped ${unresolved.length} test(s) whose test item couldn't be found: ${unresolved.map(t => t.declaration.path.join(' › ')).join(', ')}`);
+      return unresolved;
+    }
+    await this.runAtLocations(unresolved, mode);
+    return [];
   }
 
   /** Opens the test in the editor with its name selected. */

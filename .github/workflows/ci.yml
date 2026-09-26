@@ -26,6 +26,25 @@ jobs:
           dotnet-version: 8.0.x
       - name: Integration tests (C#)
         run: xvfb-run -a npm run test:integration:csharp
+      - name: Integration tests (F#)
+        run: xvfb-run -a npm run test:integration:fsharp
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+      - name: Install gopls
+        run: go install golang.org/x/tools/gopls@latest
+      - name: Integration tests (Go)
+        run: xvfb-run -a npm run test:integration:go
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pytest
+        run: python -m pip install pytest
+      - name: Integration tests (Python)
+        run: xvfb-run -a npm run test:integration:python
+      - name: Integration tests (Java)
+        run: xvfb-run -a npm run test:integration:java
 
   package:
     runs-on: ubuntu-latest

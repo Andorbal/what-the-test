@@ -21,16 +21,24 @@
     "coverage",
     "csharp",
     "dotnet",
+    "fsharp",
+    "go",
+    "java",
+    "python",
     "typescript",
     "javascript"
   ],
   "main": "./out/extension.js",
   "activationEvents": [
     "onLanguage:csharp",
+    "onLanguage:fsharp",
+    "onLanguage:go",
+    "onLanguage:java",
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
     "onLanguage:javascript",
-    "onLanguage:javascriptreact"
+    "onLanguage:javascriptreact",
+    "onLanguage:python"
   ],
   "contributes": {
     "commands": [
@@ -53,10 +61,40 @@
         "icon": "$(debug-alt)"
       },
       {
+        "command": "whatTheTest.showTestsForChanges",
+        "title": "Show Tests Covering Changes",
+        "category": "What the Test",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "whatTheTest.runTestsForChanges",
+        "title": "Run Tests Covering Changes",
+        "category": "What the Test",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "whatTheTest.debugTestsForChanges",
+        "title": "Debug Tests Covering Changes",
+        "category": "What the Test",
+        "icon": "$(debug-alt)"
+      },
+      {
         "command": "whatTheTest.refresh",
         "title": "Refresh Tests Covering Line",
         "category": "What the Test",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "whatTheTest.pin",
+        "title": "Pin Tests Covering Line",
+        "category": "What the Test",
+        "icon": "$(pin)"
+      },
+      {
+        "command": "whatTheTest.unpin",
+        "title": "Unpin Tests Covering Line",
+        "category": "What the Test",
+        "icon": "$(pinned)"
       },
       {
         "command": "whatTheTest.runTest",
@@ -89,7 +127,7 @@
     "viewsWelcome": [
       {
         "view": "whatTheTest.lineTests",
-        "contents": "Place the cursor on a line of C#, TypeScript or JavaScript code to see the tests that exercise it."
+        "contents": "Place the cursor on a line of C#, F#, Go, Java, Python, TypeScript or JavaScript code to see the tests that exercise it."
       }
     ],
     "menus": {
@@ -105,6 +143,14 @@
         {
           "command": "whatTheTest.goToTest",
           "when": "false"
+        },
+        {
+          "command": "whatTheTest.pin",
+          "when": "!whatTheTest.pinned"
+        },
+        {
+          "command": "whatTheTest.unpin",
+          "when": "whatTheTest.pinned"
         }
       ],
       "editor/context": [
@@ -139,6 +185,31 @@
           "command": "whatTheTest.refresh",
           "when": "view == whatTheTest.lineTests",
           "group": "navigation@3"
+        },
+        {
+          "command": "whatTheTest.pin",
+          "when": "view == whatTheTest.lineTests && !whatTheTest.pinned",
+          "group": "navigation@4"
+        },
+        {
+          "command": "whatTheTest.unpin",
+          "when": "view == whatTheTest.lineTests && whatTheTest.pinned",
+          "group": "navigation@4"
+        },
+        {
+          "command": "whatTheTest.showTestsForChanges",
+          "when": "view == whatTheTest.lineTests",
+          "group": "changes@1"
+        },
+        {
+          "command": "whatTheTest.runTestsForChanges",
+          "when": "view == whatTheTest.lineTests",
+          "group": "changes@2"
+        },
+        {
+          "command": "whatTheTest.debugTestsForChanges",
+          "when": "view == whatTheTest.lineTests",
+          "group": "changes@3"
         }
       ],
       "view/item/context": [
@@ -157,8 +228,55 @@
           "when": "view == whatTheTest.lineTests && viewItem == coveringTest",
           "group": "inline@3"
         }
+      ],
+      "scm/title": [
+        {
+          "command": "whatTheTest.showTestsForChanges",
+          "when": "scmProvider == git",
+          "group": "whatTheTest@1"
+        },
+        {
+          "command": "whatTheTest.runTestsForChanges",
+          "when": "scmProvider == git",
+          "group": "whatTheTest@2"
+        }
       ]
     },
+    "keybindings": [
+      {
+        "command": "whatTheTest.runTestsForLine",
+        "key": "ctrl+; w",
+        "mac": "cmd+; w",
+        "when": "editorTextFocus && whatTheTest.supportedEditor || focusedView == whatTheTest.lineTests"
+      },
+      {
+        "command": "whatTheTest.debugTestsForLine",
+        "key": "ctrl+; ctrl+w",
+        "mac": "cmd+; cmd+w",
+        "when": "editorTextFocus && whatTheTest.supportedEditor || focusedView == whatTheTest.lineTests"
+      },
+      {
+        "command": "whatTheTest.showTestsForLine",
+        "key": "ctrl+; shift+w",
+        "mac": "cmd+; shift+w",
+        "when": "editorTextFocus && whatTheTest.supportedEditor || focusedView == whatTheTest.lineTests"
+      },
+      {
+        "command": "whatTheTest.runTestsForChanges",
+        "key": "ctrl+; g",
+        "mac": "cmd+; g"
+      },
+      {
+        "command": "whatTheTest.debugTestsForChanges",
+        "key": "ctrl+; ctrl+g",
+        "mac": "cmd+; cmd+g"
+      },
+      {
+        "command": "whatTheTest.showTestsForChanges",
+        "key": "ctrl+; shift+g",
+        "mac": "cmd+; shift+g"
+      }
+    ],
     "configuration": {
       "title": "What the Test",
       "properties": {
@@ -190,6 +308,11 @@
           "minimum": 0,
           "description": "Delay after the cursor stops moving before covering tests are computed."
         },
+        "whatTheTest.runTestsOnSave": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "After saving a file, run the tests that cover the lines changed since it was last saved. Tests that can only be run with **Run Test at Cursor** are skipped (see the *What the Test* output)."
+        },
         "whatTheTest.csharp.additionalTestAttributes": {
           "type": "array",
           "items": {
@@ -197,6 +320,22 @@
           },
           "default": [],
           "description": "Extra C# attribute names (without the 'Attribute' suffix) that mark a method as a test."
+        },
+        "whatTheTest.fsharp.additionalTestAttributes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra F# attribute names (without the 'Attribute' suffix) that mark a function or member as a test."
+        },
+        "whatTheTest.java.additionalTestAnnotations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra Java annotation names (without '@') that mark a method as a test."
         },
         "whatTheTest.javascript.additionalTestFunctions": {
           "type": "array",
@@ -223,10 +362,14 @@
     "watch": "tsc -watch -p ./",
     "test:unit": "npm run compile && mocha \"out/test/unit/**/*.test.js\"",
     "test:integration": "npm run compile && node ./out/test/integration/runTests.js",
+    "test:integration:csharp": "npm run compile && node ./out/test/integration/runLanguageTests.js csharp",
+    "test:integration:fsharp": "npm run compile && node ./out/test/integration/runLanguageTests.js fsharp",
+    "test:integration:go": "npm run compile && node ./out/test/integration/runLanguageTests.js go",
+    "test:integration:java": "npm run compile && node ./out/test/integration/runLanguageTests.js java",
+    "test:integration:python": "npm run compile && node ./out/test/integration/runLanguageTests.js python",
     "test": "npm run test:unit && npm run test:integration",
     "package": "node scripts/package.mjs",
     "screenshots": "node scripts/screenshots/record.mjs",
-    "test:integration:csharp": "npm run compile && node ./out/test/integration/runCSharpTests.js",
     "version": "node scripts/changelog.mjs release $npm_package_version && git add CHANGELOG.md"
   },
   "devDependencies": {

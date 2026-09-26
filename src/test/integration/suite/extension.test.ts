@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import type { LineTestsResult } from '../../../core/coveringTestFinder';
 import type { WhatTheTestApi } from '../../../extension';
 
 const workspace = () => vscode.workspace.workspaceFolders![0].uri;
@@ -65,6 +66,11 @@ async function createFakeController(id: string, idFor: (path: string[]) => strin
   root.children.add(sum);
   file.children.add(root);
   controller.items.add(file);
+  // The items reach VS Code's test index asynchronously; until then the tests can't be found by ID.
+  await waitFor(`${id}'s test items`, async () => {
+    const ids = await vscode.commands.executeCommand<string[][]>('vscode.testing.getTestsInFile', uri);
+    return ids?.some(parts => parts[0] === id && parts.length === 5) || undefined;
+  }, 10_000);
 
   const ran: string[] = [];
   let onRan: (() => void) | undefined;
@@ -147,6 +153,19 @@ suite('What the Test', () => {
     assert.deepStrictEqual(result.tests.map(t => t.declaration.name), ['upper-cases the text', 'adds an exclamation mark']);
   });
 
+  test('follows calls through interfaces and base classes', async () => {
+    const uri = vscode.Uri.joinPath(workspace(), 'src/shapes.ts');
+    const doc = await vscode.workspace.openTextDocument(uri);
+    const result = await waitFor('covering tests', async () => {
+      const r = await api.findTestsForLine(doc, await lineOf(uri, 'this.side * this.side'));
+      return r.tests.length >= 2 ? r : undefined;
+    });
+    assert.deepStrictEqual(result.tests.map(t => [t.declaration.name, t.via.join(',')]), [
+      ['adds up areas', 'totalArea'],
+      ['describes a polygon', 'describe'],
+    ]);
+  });
+
   test('reports no tests for uncovered code', async () => {
     const doc = await vscode.workspace.openTextDocument(sourceUri());
     const result = await api.findTestsForLine(doc, await lineOf(sourceUri(), 'nobody calls me'));
@@ -227,5 +246,133 @@ suite('What the Test', () => {
     const editor = vscode.window.activeTextEditor!;
     assert.strictEqual(editor.document.uri.toString(), testUri().toString());
     assert.strictEqual(editor.document.getText(editor.selection), 'adds two numbers');
+  });
+
+  test('keeps the list while going through its tests', async () => {
+    const line = await lineOf(sourceUri(), 'return a + b');
+    await placeCursor(sourceUri(), line);
+    const result = await vscode.commands.executeCommand<LineTestsResult>('whatTheTest.refresh');
+    assert.strictEqual(result.tests.length, 2);
+
+    // Going to a listed test keeps the list for the original line...
+    await vscode.commands.executeCommand('whatTheTest.goToTest', result.tests[1]);
+    const held = await vscode.commands.executeCommand<LineTestsResult>('whatTheTest.refresh');
+    assert.strictEqual(held.uri.toString(), sourceUri().toString());
+    assert.strictEqual(held.line, line);
+    assert.deepStrictEqual(held.tests.map(t => t.declaration.name), ['adds two numbers', 'sums a list']);
+
+    // ...so "Run All" still runs all of them.
+    const fake = await createFakeController('fake-held', path => ['held', ...path].join('.'));
+    try {
+      const done = fake.waitForRuns(1);
+      await vscode.commands.executeCommand('whatTheTest.runTestsForLine');
+      await done;
+      assert.deepStrictEqual([...fake.ran].sort(), ['adds two numbers', 'sums a list']);
+    } finally {
+      fake.controller.dispose();
+    }
+
+    // Leaving the tests follows the cursor again.
+    await placeCursor(testUri(), 0);
+    const after = await vscode.commands.executeCommand<LineTestsResult>('whatTheTest.refresh');
+    assert.strictEqual(after.uri.toString(), testUri().toString());
+    assert.strictEqual(after.line, 0);
+  });
+
+  test('pins the list to a line', async () => {
+    const line = await lineOf(sourceUri(), 'return a + b');
+    await placeCursor(sourceUri(), line);
+    await vscode.commands.executeCommand('whatTheTest.refresh');
+    await vscode.commands.executeCommand('whatTheTest.pin');
+    try {
+      await placeCursor(sourceUri(), await lineOf(sourceUri(), 'nobody calls me'));
+      const pinned = await vscode.commands.executeCommand<LineTestsResult>('whatTheTest.refresh');
+      assert.strictEqual(pinned.line, line);
+      assert.strictEqual(pinned.tests.length, 2);
+    } finally {
+      await vscode.commands.executeCommand('whatTheTest.unpin');
+    }
+    const unpinned = await vscode.commands.executeCommand<LineTestsResult>('whatTheTest.refresh');
+    assert.strictEqual(unpinned.line, await lineOf(sourceUri(), 'nobody calls me'));
+    assert.strictEqual(unpinned.tests.length, 0);
+  });
+
+  suite('tests covering changes', () => {
+    let fake: Awaited<ReturnType<typeof createFakeController>>;
+    setup(async () => {
+      fake = await createFakeController('fake-changes', path => ['changes', ...path].join('.'));
+    });
+    teardown(async () => {
+      fake.controller.dispose();
+      await vscode.workspace.getConfiguration('whatTheTest').update('runTestsOnSave', undefined, vscode.ConfigurationTarget.Global);
+      // Undo edits (saved or not) to the fixtures.
+      for (const uri of [sourceUri(), testUri()]) {
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const original = originals.get(uri.toString());
+        if (original !== undefined && doc.getText() !== original) {
+          const editor = await vscode.window.showTextDocument(doc);
+          await editor.edit(b => b.replace(new vscode.Range(0, 0, doc.lineCount, 0), original));
+        }
+        if (doc.isDirty) {
+          await doc.save();
+        }
+      }
+    });
+
+    const originals = new Map<string, string>();
+    async function editLine(uri: vscode.Uri, needle: string, from: string, to: string): Promise<vscode.TextDocument> {
+      const doc = await vscode.workspace.openTextDocument(uri);
+      if (!originals.has(uri.toString())) {
+        originals.set(uri.toString(), doc.getText());
+      }
+      const editor = await vscode.window.showTextDocument(doc);
+      const line = editor.document.lineAt(await lineOf(uri, needle));
+      await editor.edit(b => b.replace(line.range, line.text.replace(from, to)));
+      return editor.document;
+    }
+
+    test('runs the tests covering unsaved changes', async () => {
+      await editLine(sourceUri(), 'return a + b', 'a + b', 'b + a');
+      const done = fake.waitForRuns(1);
+      await vscode.commands.executeCommand('whatTheTest.runTestsForChanges');
+      await done;
+      assert.deepStrictEqual([...fake.ran].sort(), ['adds two numbers', 'sums a list']);
+    });
+
+    test('includes a test whose own code changed', async () => {
+      await editLine(sourceUri(), 'nobody calls me', 'nobody', 'no one');
+      await editLine(testUri(), 'sum([1, 2, 3])', '1, 2, 3', '3, 2, 1');
+      const done = fake.waitForRuns(1);
+      await vscode.commands.executeCommand('whatTheTest.runTestsForChanges');
+      await done;
+      assert.deepStrictEqual(fake.ran, ['sums a list']);
+    });
+
+    test('runs the tests covering a save when runTestsOnSave is on', async () => {
+      await vscode.workspace.getConfiguration('whatTheTest').update('runTestsOnSave', true, vscode.ConfigurationTarget.Global);
+      const doc = await editLine(sourceUri(), 'return a + b', 'a + b', 'b + a');
+      const done = fake.waitForRuns(1);
+      await doc.save();
+      await done;
+      assert.deepStrictEqual([...fake.ran].sort(), ['adds two numbers', 'sums a list']);
+    });
+
+    test('compares saved files with the last commit', async function () {
+      const git = vscode.extensions.getExtension<any>('vscode.git'); // eslint-disable-line @typescript-eslint/no-explicit-any
+      const api = git && (await git.activate()).getAPI(1);
+      // The fixture is a subfolder of this repository, which VS Code doesn't open by default.
+      const repo = api && await api.openRepository(vscode.Uri.joinPath(workspace(), '../..'));
+      if (!repo) {
+        this.skip();
+      }
+      const doc = await editLine(sourceUri(), 'return a + b', 'a + b', 'b + a');
+      await doc.save();
+      await waitFor('Git to see the change', async () =>
+        repo.state.workingTreeChanges.some((c: { uri: vscode.Uri }) => c.uri.toString() === sourceUri().toString()) || undefined);
+      const done = fake.waitForRuns(1);
+      await vscode.commands.executeCommand('whatTheTest.runTestsForChanges');
+      await done;
+      assert.deepStrictEqual([...fake.ran].sort(), ['adds two numbers', 'sums a list']);
+    });
   });
 });
