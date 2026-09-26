@@ -32,6 +32,7 @@ export class ChangedTestsCommands implements vscode.Disposable {
       vscode.commands.registerCommand('whatTheTest.runTestsForChanges', () => this.run('run')),
       vscode.commands.registerCommand('whatTheTest.debugTestsForChanges', () => this.run('debug')),
       vscode.workspace.onDidChangeTextDocument(e => this.onDidChange(e)),
+      vscode.workspace.onWillSaveTextDocument(e => this.onWillSave(e)),
       vscode.workspace.onDidSaveTextDocument(document => void this.onDidSave(document)),
       vscode.workspace.onDidCloseTextDocument(document => this.savedTexts.delete(document.uri.toString())),
     );
@@ -90,6 +91,14 @@ export class ChangedTestsCommands implements vscode.Disposable {
     if (e.contentChanges.length && !this.savedTexts.has(key) && this.runOnSave && e.document.uri.scheme === 'file' &&
       this.isSupported(e.document)) {
       this.savedTexts.set(key, savedText(e.document.uri));
+    }
+  }
+
+  private onWillSave(e: vscode.TextDocumentWillSaveEvent): void {
+    // The save is about to overwrite the file: finish reading its old contents first.
+    const pending = this.savedTexts.get(e.document.uri.toString());
+    if (pending) {
+      e.waitUntil(pending.then(() => undefined));
     }
   }
 

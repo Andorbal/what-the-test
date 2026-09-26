@@ -66,6 +66,11 @@ async function createFakeController(id: string, idFor: (path: string[]) => strin
   root.children.add(sum);
   file.children.add(root);
   controller.items.add(file);
+  // The items reach VS Code's test index asynchronously; until then the tests can't be found by ID.
+  await waitFor(`${id}'s test items`, async () => {
+    const ids = await vscode.commands.executeCommand<string[][]>('vscode.testing.getTestsInFile', uri);
+    return ids?.some(parts => parts[0] === id && parts.length === 5) || undefined;
+  }, 10_000);
 
   const ran: string[] = [];
   let onRan: (() => void) | undefined;
