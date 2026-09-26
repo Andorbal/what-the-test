@@ -5,7 +5,7 @@ All notable changes to What the Test are documented here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); see
 [RELEASING.md](RELEASING.md) for how versions are chosen and released.
 
-## [Unreleased]
+## [0.2.0]
 
 ### Added
 
