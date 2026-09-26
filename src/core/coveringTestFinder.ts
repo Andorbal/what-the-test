@@ -10,7 +10,7 @@ export interface CoveringTest {
   readonly uri: vscode.Uri;
   readonly declaration: TestDeclaration;
   readonly adapter: LanguageAdapter;
-  /** Number of calls between the test and the line; 0 when the line is inside the test. */
+  /** Number of calls between the test and the line; 1 when the test calls it directly. */
   readonly distance: number;
   /** Names of the functions between the test and the line, nearest to the test first. */
   readonly via: readonly string[];
@@ -21,6 +21,12 @@ export interface LineTestsResult {
   readonly line: number;
   /** Name of the symbol the line belongs to, when there is one. */
   readonly symbolName?: string;
+  /**
+   * The test that contains the line, or the suite when the line is in a setup
+   * region such as `beforeEach`. Lines of test code aren't searched for
+   * covering tests, so `tests` is empty when this is set.
+   */
+  readonly enclosingTest?: TestDeclaration;
   readonly tests: readonly CoveringTest[];
   /** True when the search stopped early because it hit the configured limits. */
   readonly truncated: boolean;
@@ -87,14 +93,11 @@ export class CoveringTestFinder {
     const found = new Map<string, CoveringTest>();
     const empty: LineTestsResult = { uri: document.uri, line, tests: [], truncated: false };
 
-    // The line may be part of a test itself.
+    // Test code isn't covered by other tests; listing the test itself would only confuse.
     const own = this.registry.parseTestFile(document);
-    if (own) {
-      const decl = declarationAt(own.parsed, position);
-      if (decl) {
-        this.record(found, document.uri, decl, own.adapter, 0, []);
-        return { ...empty, symbolName: decl.name, tests: [...found.values()] };
-      }
+    const enclosingTest = own && declarationAt(own.parsed, position);
+    if (enclosingTest) {
+      return { ...empty, symbolName: enclosingTest.name, enclosingTest };
     }
 
     const symbol = await this.enclosingSymbol(document, position);

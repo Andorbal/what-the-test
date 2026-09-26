@@ -4,6 +4,7 @@ import { CoveringTest, CoveringTestFinder, LineTestsResult } from './core/coveri
 import { LanguageAdapter } from './core/languageAdapter';
 import { RunMode, TestingBridge } from './core/testingBridge';
 import { builtInAdapters } from './languages';
+import { noTestsMessage } from './ui/format';
 import { LineIndicators } from './ui/indicators';
 import { LineTestsService } from './ui/lineTestsService';
 import { showLineTestsQuickPick } from './ui/lineTestsQuickPick';
@@ -52,7 +53,7 @@ export function activate(context: vscode.ExtensionContext): WhatTheTestApi {
       return;
     }
     if (!result.tests.length) {
-      void vscode.window.showInformationMessage(`No tests found that cover line ${result.line + 1}.`);
+      void vscode.window.showInformationMessage(noTestsMessage(result));
       return;
     }
     await bridge.run(result.tests, mode);

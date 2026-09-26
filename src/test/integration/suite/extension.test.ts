@@ -153,11 +153,19 @@ suite('What the Test', () => {
     assert.strictEqual(result.tests.length, 0);
   });
 
-  test('a line inside a test is covered by that test', async () => {
+  test('lists no tests for a line inside a test', async () => {
     const doc = await vscode.workspace.openTextDocument(testUri());
     const result = await api.findTestsForLine(doc, await lineOf(testUri(), 'sum([1, 2, 3])'));
-    assert.deepStrictEqual(result.tests.map(t => t.declaration.name), ['sums a list']);
-    assert.strictEqual(result.tests[0].distance, 0);
+    assert.strictEqual(result.tests.length, 0);
+    assert.strictEqual(result.enclosingTest?.name, 'sums a list');
+  });
+
+  test('lists the tests that use a helper in a test file', async () => {
+    const uri = vscode.Uri.joinPath(workspace(), 'test/greeter.spec.ts');
+    const doc = await vscode.workspace.openTextDocument(uri);
+    const result = await api.findTestsForLine(doc, await lineOf(uri, "return new Greeter('world')"));
+    assert.strictEqual(result.enclosingTest, undefined);
+    assert.deepStrictEqual(result.tests.map(t => t.declaration.name), ['greets loudly']);
   });
 
   test('runs all covering tests by ID through the Testing API', async () => {

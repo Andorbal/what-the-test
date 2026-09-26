@@ -14,6 +14,13 @@ All notable changes to What the Test are documented here. The format follows
   and publishes it as a GitHub Release.
 - CI uploads an installable `.vsix` for every push and pull request.
 
+### Changed
+
+- A line inside a test (or a setup region such as `beforeEach`) no longer lists
+  that test as covering it. The status bar count is hidden there, and the Tests
+  Covering Line view names the test the line belongs to. The exported
+  `findTestsForLine` reports that test as `enclosingTest`.
+
 ### Fixed
 
 - TypeScript/JavaScript: when several tests in one file call the code, all of

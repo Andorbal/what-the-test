@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { CoveringTest, LineTestsResult } from '../core/coveringTestFinder';
 import { RunMode, TestingBridge } from '../core/testingBridge';
-import { covers, pluralTests, testLocation, testReach, testTitle } from './format';
+import { covers, noTestsMessage, pluralTests, testLocation, testReach, testTitle } from './format';
 
 interface TestPickItem extends vscode.QuickPickItem {
   test?: CoveringTest;
@@ -18,7 +18,7 @@ const DEBUG_BUTTON: vscode.QuickInputButton = { iconPath: new vscode.ThemeIcon('
 export async function showLineTestsQuickPick(result: LineTestsResult, bridge: TestingBridge): Promise<void> {
   const count = result.tests.length;
   if (!count) {
-    void vscode.window.showInformationMessage(`No tests found that cover line ${result.line + 1}.`);
+    void vscode.window.showInformationMessage(noTestsMessage(result));
     return;
   }
 
