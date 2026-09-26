@@ -5,6 +5,8 @@ how many tests reach the line under your cursor, lets you jump to any of them,
 and runs one or all of them through VS Code's built-in **Testing**
 infrastructure. It doesn't add a test runner of its own.
 
+![Moving the cursor through a TypeScript file updates the test count at the end of the line, in the status bar and in the Tests Covering Line view; Run All then runs the 7 covering tests with the Jest extension.](docs/images/demo.gif)
+
 Supported out of the box:
 
 | Language | Test frameworks recognised | Runs through |
@@ -43,6 +45,8 @@ and [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 Each test entry says how it reaches the line, for example *calls it directly*
 or *via Calculator.Sum → Parse*.
+
+<img src="docs/images/quick-pick.png" width="603" alt="Quick pick titled '7 tests cover line 23 (roundCents)', listing Run all, Debug all and each test with how it reaches the line, such as 'via subtotal → lineTotal'.">
 
 ## How it works
 

@@ -9,3 +9,4 @@ test-fixtures/**
 .gitignore
 scripts/**
 RELEASING.md
+docs/**
