@@ -234,6 +234,41 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "whatTheTest.runTestsForLine",
+        "key": "ctrl+; w",
+        "mac": "cmd+; w",
+        "when": "editorTextFocus && whatTheTest.supportedEditor || focusedView == whatTheTest.lineTests"
+      },
+      {
+        "command": "whatTheTest.debugTestsForLine",
+        "key": "ctrl+; ctrl+w",
+        "mac": "cmd+; cmd+w",
+        "when": "editorTextFocus && whatTheTest.supportedEditor || focusedView == whatTheTest.lineTests"
+      },
+      {
+        "command": "whatTheTest.showTestsForLine",
+        "key": "ctrl+; shift+w",
+        "mac": "cmd+; shift+w",
+        "when": "editorTextFocus && whatTheTest.supportedEditor || focusedView == whatTheTest.lineTests"
+      },
+      {
+        "command": "whatTheTest.runTestsForChanges",
+        "key": "ctrl+; g",
+        "mac": "cmd+; g"
+      },
+      {
+        "command": "whatTheTest.debugTestsForChanges",
+        "key": "ctrl+; ctrl+g",
+        "mac": "cmd+; cmd+g"
+      },
+      {
+        "command": "whatTheTest.showTestsForChanges",
+        "key": "ctrl+; shift+g",
+        "mac": "cmd+; shift+g"
+      }
+    ],
     "configuration": {
       "title": "What the Test",
       "properties": {

@@ -20,6 +20,10 @@ All notable changes to What the Test are documented here. The format follows
   Source Control view's `…` menu.
 - `whatTheTest.runTestsOnSave` setting (off by default): after each save, run
   the tests covering the lines that changed.
+- Keyboard shortcuts, next to VS Code's own test shortcuts: `Ctrl+; W` runs
+  the tests covering the line (`Ctrl+; Ctrl+W` debugs them, `Ctrl+; Shift+W`
+  lists them), and `Ctrl+; G` / `Ctrl+; Ctrl+G` / `Ctrl+; Shift+G` do the same
+  for the tests covering your changes. `Cmd` instead of `Ctrl` on macOS.
 
 ### Changed
 

@@ -55,6 +55,24 @@ and [CHANGELOG.md](CHANGELOG.md) for what changed.
 - **Run on save** (off by default, `whatTheTest.runTestsOnSave`): after each
   save, runs the tests that cover the lines that save changed.
 
+### Keyboard shortcuts
+
+They follow VS Code's own test shortcuts (`Ctrl+; C` runs the test at the
+cursor): the letter runs, `Ctrl` + the letter debugs. On macOS, use `Cmd`
+instead of `Ctrl`.
+
+| Shortcut | Command |
+| --- | --- |
+| `Ctrl+; W` | Run All Tests Covering Line |
+| `Ctrl+; Ctrl+W` | Debug All Tests Covering Line |
+| `Ctrl+; Shift+W` | Show Tests Covering Line |
+| `Ctrl+; G` | Run Tests Covering Changes |
+| `Ctrl+; Ctrl+G` | Debug Tests Covering Changes |
+| `Ctrl+; Shift+G` | Show Tests Covering Changes |
+
+The line shortcuts work in an editor of a supported language and in the Tests
+Covering Line view.
+
 Each test entry says how it reaches the line, for example *calls it directly*
 or *via Calculator.Sum → Parse*.
 
