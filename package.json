@@ -23,6 +23,7 @@
     "dotnet",
     "fsharp",
     "go",
+    "java",
     "python",
     "typescript",
     "javascript"
@@ -32,6 +33,7 @@
     "onLanguage:csharp",
     "onLanguage:fsharp",
     "onLanguage:go",
+    "onLanguage:java",
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
     "onLanguage:javascript",
@@ -125,7 +127,7 @@
     "viewsWelcome": [
       {
         "view": "whatTheTest.lineTests",
-        "contents": "Place the cursor on a line of C#, F#, Go, Python, TypeScript or JavaScript code to see the tests that exercise it."
+        "contents": "Place the cursor on a line of C#, F#, Go, Java, Python, TypeScript or JavaScript code to see the tests that exercise it."
       }
     ],
     "menus": {
@@ -327,6 +329,14 @@
           "default": [],
           "description": "Extra F# attribute names (without the 'Attribute' suffix) that mark a function or member as a test."
         },
+        "whatTheTest.java.additionalTestAnnotations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra Java annotation names (without '@') that mark a method as a test."
+        },
         "whatTheTest.javascript.additionalTestFunctions": {
           "type": "array",
           "items": {
@@ -355,6 +365,7 @@
     "test:integration:csharp": "npm run compile && node ./out/test/integration/runLanguageTests.js csharp",
     "test:integration:fsharp": "npm run compile && node ./out/test/integration/runLanguageTests.js fsharp",
     "test:integration:go": "npm run compile && node ./out/test/integration/runLanguageTests.js go",
+    "test:integration:java": "npm run compile && node ./out/test/integration/runLanguageTests.js java",
     "test:integration:python": "npm run compile && node ./out/test/integration/runLanguageTests.js python",
     "test": "npm run test:unit && npm run test:integration",
     "package": "node scripts/package.mjs",

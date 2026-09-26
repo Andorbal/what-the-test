@@ -42,6 +42,14 @@
       "preLaunchTask": "npm: watch"
     },
     {
+      "name": "Run Extension (Java fixture)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}", "${workspaceFolder}/test-fixtures/java-project"],
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "npm: watch"
+    },
+    {
       "name": "Run Extension (Python fixture)",
       "type": "extensionHost",
       "request": "launch",

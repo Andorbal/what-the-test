@@ -43,6 +43,8 @@ jobs:
         run: python -m pip install pytest
       - name: Integration tests (Python)
         run: xvfb-run -a npm run test:integration:python
+      - name: Integration tests (Java)
+        run: xvfb-run -a npm run test:integration:java
 
   package:
     runs-on: ubuntu-latest

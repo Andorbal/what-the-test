@@ -19,6 +19,10 @@ All notable changes to What the Test are documented here. The format follows
   (with `SetupTest` and friends as setup). Uses gopls; tests run through the
   Go extension. A subtest that hasn't run yet (so has no test item) runs
   through its parent test.
+- Java support: JUnit 5 (including `@Nested` classes), JUnit 4, TestNG and
+  jqwik tests, with `@BeforeEach` and friends and test class constructors as
+  setup. Uses the Java extension's language server; tests run through the
+  Test Runner for Java. New setting `whatTheTest.java.additionalTestAnnotations`.
 - Python support: pytest `test*` functions and `Test*` classes, unittest
   `TestCase` classes, their setup methods, autouse fixtures and module-level
   setup. Regular pytest fixtures are followed to the tests that request them.

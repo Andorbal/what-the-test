@@ -59,7 +59,7 @@ export class LineTestsService implements vscode.Disposable {
       }),
       registry.onDidChange(() => this.invalidate()),
     );
-    const watcher = vscode.workspace.createFileSystemWatcher('**/*.{cs,fs,fsi,fsx,go,py,ts,tsx,mts,cts,js,jsx,mjs,cjs}');
+    const watcher = vscode.workspace.createFileSystemWatcher('**/*.{cs,fs,fsi,fsx,go,java,py,ts,tsx,mts,cts,js,jsx,mjs,cjs}');
     this.disposables.push(
       watcher,
       watcher.onDidCreate(() => this.invalidate()),

@@ -22,8 +22,8 @@ export function matchTestId(decl: TestDeclaration, candidates: readonly (readonl
   return best?.parts;
 }
 
-/** Characters controllers commonly use to separate names inside an ID segment. */
-const SEPARATOR = /[\s./\\#:>|,+\-]/;
+/** Characters controllers commonly use to separate names inside an ID segment (`$` and `@`: Java). */
+const SEPARATOR = /[\s./\\#:>|,+\-$@]/;
 
 function nameMatchScore(segment: string, name: string): number {
   if (segment === name) {

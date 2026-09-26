@@ -25,14 +25,16 @@ function python(): string {
 /**
  * End-to-end tests against real language servers, installed from the
  * Marketplace. Each needs its toolchain on PATH (the .NET SDK for C# and F#,
- * Go and gopls for Go, Python with pytest for Python).
+ * Go and gopls for Go, Python with pytest for Python; the Java extension
+ * brings its own JDK and downloads the fixture's Maven dependencies).
  *
- *   node runLanguageTests.js <csharp|fsharp|go|python>
+ *   node runLanguageTests.js <csharp|fsharp|go|java|python>
  */
 const SUITES: Record<string, LanguageSuite> = {
   csharp: { fixture: 'csharp-project', extensions: ['ms-dotnettools.csharp'], build: ['dotnet', 'build'] },
   fsharp: { fixture: 'fsharp-project', extensions: ['ionide.ionide-fsharp'], build: ['dotnet', 'build'] },
   go: { fixture: 'go-project', extensions: ['golang.go'] },
+  java: { fixture: 'java-project', extensions: ['redhat.java', 'vscjava.vscode-java-test'] },
   python: { fixture: 'python-project', extensions: ['ms-python.python'], settings: () => ({ 'python.defaultInterpreterPath': python() }) },
 };
 

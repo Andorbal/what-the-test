@@ -61,6 +61,19 @@ describe('matchTestId', () => {
     assert.deepStrictEqual(matchTestId(decl(['strings', 'sums'], 'suite'), expecto), expecto[0]);
   });
 
+  it('matches Java Test Runner IDs, including nested classes', () => {
+    const cls = 'calc@com.example.calc.CalculatorTest';
+    const candidates = [
+      ['java', 'calc', 'calc@com.example.calc', cls],
+      ['java', 'calc', 'calc@com.example.calc', cls, `${cls}#adds()`],
+      ['java', 'calc', 'calc@com.example.calc', cls, `${cls}$Sums`],
+      ['java', 'calc', 'calc@com.example.calc', cls, `${cls}$Sums`, `${cls}$Sums#adds()`],
+    ];
+    assert.deepStrictEqual(matchTestId(decl(['com.example.calc', 'CalculatorTest', 'adds']), candidates), candidates[1]);
+    assert.deepStrictEqual(matchTestId(decl(['com.example.calc', 'CalculatorTest', 'Sums', 'adds']), candidates), candidates[3]);
+    assert.deepStrictEqual(matchTestId(decl(['com.example.calc', 'CalculatorTest', 'Sums'], 'suite'), candidates), candidates[2]);
+  });
+
   it('does not match partial words', () => {
     const candidates = [['c', 'Tests.AddMany']];
     assert.strictEqual(matchTestId(decl(['Add']), candidates), undefined);

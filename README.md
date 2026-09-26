@@ -14,6 +14,7 @@ Supported out of the box:
 | C# / .NET | xUnit, NUnit, MSTest, TUnit, FsCheck | C# Dev Kit or any other .NET test controller |
 | F# | xUnit, NUnit, MSTest, FsCheck, Expecto | Ionide, C# Dev Kit or any other .NET test controller |
 | Go | `go test` tests, benchmarks, fuzz tests, examples, `t.Run` subtests, testify suites | Go extension |
+| Java | JUnit 5 (incl. `@Nested`), JUnit 4, TestNG, jqwik | Test Runner for Java |
 | Python | pytest (functions, `Test*` classes, fixtures), unittest | Python extension |
 | TypeScript / JavaScript (incl. JSX/TSX) | Jest, Vitest, Mocha (BDD & TDD), Jasmine, `node:test`, Playwright, Bun | Jest, Vitest, Mocha Test Explorer, Playwright, ... |
 
@@ -110,8 +111,9 @@ walk continues through the caller.
 
 The language servers do the semantic work, so no build or test run is needed:
 the TypeScript server built into VS Code, Roslyn from the C# extension,
-FsAutoComplete from Ionide for F#, gopls from the Go extension and Pylance
-from the Python extension. Each
+FsAutoComplete from Ionide for F#, gopls from the Go extension, the Eclipse
+JDT language server from the Java extension and Pylance from the Python
+extension. Each
 language adapter only needs to recognise which parts of a test file are tests.
 
 > **Python:** pytest fixtures are followed: code a fixture calls counts for
@@ -153,6 +155,7 @@ example C# Dev Kit, Jest, Vitest or Mocha Test Explorer).
 | `whatTheTest.runTestsOnSave` | `false` | After saving a file, run the tests covering the lines that changed. |
 | `whatTheTest.csharp.additionalTestAttributes` | `[]` | Extra attributes that mark a C# test method. |
 | `whatTheTest.fsharp.additionalTestAttributes` | `[]` | Extra attributes that mark an F# test. |
+| `whatTheTest.java.additionalTestAnnotations` | `[]` | Extra annotations that mark a Java test method. |
 | `whatTheTest.javascript.additionalTestFunctions` | `[]` | Extra JS/TS functions that declare a test. |
 | `whatTheTest.javascript.additionalSuiteFunctions` | `[]` | Extra JS/TS functions that declare a suite. |
 
@@ -179,6 +182,7 @@ range, plus any setup regions. See the built-in adapters for examples:
 - C#: [csharpAdapter.ts](src/languages/csharp/csharpAdapter.ts) and [csharpTestParser.ts](src/languages/csharp/csharpTestParser.ts)
 - F#: [fsharpAdapter.ts](src/languages/fsharp/fsharpAdapter.ts) and [fsharpTestParser.ts](src/languages/fsharp/fsharpTestParser.ts)
 - Go: [goAdapter.ts](src/languages/go/goAdapter.ts) and [goTestParser.ts](src/languages/go/goTestParser.ts)
+- Java: [javaAdapter.ts](src/languages/java/javaAdapter.ts) and [javaTestParser.ts](src/languages/java/javaTestParser.ts) (shares the C# parser's structure)
 - Python: [pythonAdapter.ts](src/languages/python/pythonAdapter.ts) and [pythonTestParser.ts](src/languages/python/pythonTestParser.ts)
 - JS/TS: [javascriptAdapter.ts](src/languages/javascript/javascriptAdapter.ts) and [jsTestParser.ts](src/languages/javascript/jsTestParser.ts)
 
@@ -219,6 +223,7 @@ src/
     csharp/                    C# masking, parser and adapter
     fsharp/                    F# masking, parser (attributes and Expecto) and adapter
     go/                        Go masking, parser (tests, subtests, testify) and adapter
+    java/                      Java parser (annotations, on top of the C# parser) and adapter
     python/                    Python masking, parser (pytest and unittest) and adapter
     javascript/                JS/TS masking, parser and adapter
   ui/                          status bar, inline hint, tree view, quick pick
@@ -230,6 +235,7 @@ test-fixtures/
   csharp-project/              small xUnit solution used by the C# integration tests
   fsharp-project/              small xUnit + Expecto solution used by the F# integration tests
   go-project/                  small Go module used by the Go integration tests
+  java-project/                small Maven + JUnit 5 project used by the Java integration tests
   python-project/              small pytest + unittest project used by the Python integration tests
 ```
 
@@ -243,6 +249,7 @@ npm run test:integration          # in VS Code: TS language server + fake test c
 npm run test:integration:csharp   # in VS Code with the C# extension (needs the .NET SDK)
 npm run test:integration:fsharp   # in VS Code with Ionide (needs the .NET SDK)
 npm run test:integration:go       # in VS Code with the Go extension (needs Go and gopls)
+npm run test:integration:java     # in VS Code with the Java extensions (downloads Maven dependencies)
 npm run test:integration:python   # in VS Code with the Python extension (needs Python with pytest)
 npm run package                   # builds what-the-test-<version>.vsix
 npm run screenshots               # re-records the images in docs/images
@@ -250,7 +257,7 @@ npm run screenshots               # re-records the images in docs/images
 
 On Linux without a display, prefix the integration tests with `xvfb-run -a`.
 Press <kbd>F5</kbd> in VS Code to start an Extension Development Host. The
-launch configurations open the TS, C#, F#, Go or Python fixture project.
+launch configurations open the TS, C#, F#, Go, Java or Python fixture project.
 
 The TypeScript integration tests register fake test controllers, one with
 name-based IDs and one with opaque IDs. They check that the right tests reach

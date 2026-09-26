@@ -25,7 +25,7 @@ export interface CSharpTestParserOptions {
   setupAttributes?: readonly string[];
 }
 
-interface Container {
+export interface Container {
   kind: 'namespace' | 'type';
   name: string;
   start: number;
@@ -33,7 +33,8 @@ interface Container {
   end: number;
 }
 
-interface MethodInfo {
+/** A method preceded by attributes (C#) or annotations (Java). */
+export interface MethodInfo {
   name: string;
   nameStart: number;
   start: number;
@@ -42,13 +43,28 @@ interface MethodInfo {
 }
 
 export function parseCSharpTests(text: string, options: CSharpTestParserOptions = {}): ParsedTestFile {
-  const testAttributes = new Set(options.testAttributes ?? DEFAULT_TEST_ATTRIBUTES);
-  const setupAttributes = new Set(options.setupAttributes ?? DEFAULT_SETUP_ATTRIBUTES);
   const masked = maskCSharp(text);
-  const lines = new LineIndex(text);
+  return buildDeclarations(text, masked, findContainers(masked), findAttributedMethods(masked), {
+    testAttributes: new Set(options.testAttributes ?? DEFAULT_TEST_ATTRIBUTES),
+    setupAttributes: new Set(options.setupAttributes ?? DEFAULT_SETUP_ATTRIBUTES),
+    lifecycleMethods: LIFECYCLE_METHOD_NAMES,
+  });
+}
 
-  const containers = findContainers(masked);
-  const methods = findAttributedMethods(masked);
+/**
+ * Turns the containers and attributed methods of a C-like language (C#,
+ * Java) into tests, suites (the types that contain tests) and setup regions
+ * (setup methods, and the constructors and lifecycle methods of test types).
+ */
+export function buildDeclarations(
+  text: string,
+  masked: string,
+  containers: Container[],
+  methods: MethodInfo[],
+  options: { testAttributes: ReadonlySet<string>; setupAttributes: ReadonlySet<string>; lifecycleMethods: ReadonlySet<string> },
+): ParsedTestFile {
+  const { testAttributes, setupAttributes } = options;
+  const lines = new LineIndex(text);
 
   const pathFor = (offset: number) =>
     containers
@@ -88,7 +104,7 @@ export function parseCSharpTests(text: string, options: CSharpTestParserOptions 
       range: lines.rangeAt(type.start, type.end + 1),
       nameRange: lines.rangeAt(nameStart, nameStart + type.name.length),
     });
-    for (const region of findImplicitSetup(masked, type)) {
+    for (const region of findImplicitSetup(masked, type, options.lifecycleMethods)) {
       setupRegions.push({ range: lines.rangeAt(region.start, region.end) });
     }
   }
@@ -107,7 +123,7 @@ function innermostType(containers: Container[], offset: number): Container | und
   return best;
 }
 
-function findContainers(masked: string): Container[] {
+export function findContainers(masked: string): Container[] {
   const containers: Container[] = [];
 
   const ns = /\bnamespace\s+([\w.@]+)\s*([{;])/g;
@@ -218,7 +234,7 @@ function parseAttributeNames(content: string): string[] {
  * Reads a method declaration starting at `offset` (just after its attributes):
  * modifiers, return type, name, parameter list and body.
  */
-function readMethod(masked: string, offset: number): Omit<MethodInfo, 'start' | 'attributes'> | undefined {
+export function readMethod(masked: string, offset: number): Omit<MethodInfo, 'start' | 'attributes'> | undefined {
   let i = offset;
   let lastIdentStart = -1;
   let lastIdentEnd = -1;
@@ -274,10 +290,10 @@ function readMethod(masked: string, offset: number): Omit<MethodInfo, 'start' | 
   return { name: masked.slice(lastIdentStart, lastIdentEnd), nameStart: lastIdentStart, end };
 }
 
-/** Constructors and xUnit lifecycle methods of a test class. */
-function findImplicitSetup(masked: string, type: Container): { start: number; end: number }[] {
+/** Constructors and lifecycle methods (such as xUnit's `InitializeAsync`) of a test class. */
+function findImplicitSetup(masked: string, type: Container, lifecycleMethods: ReadonlySet<string>): { start: number; end: number }[] {
   const regions: { start: number; end: number }[] = [];
-  const names = [type.name, ...LIFECYCLE_METHOD_NAMES].map(n => n.replace(/[^\w]/g, '')).join('|');
+  const names = [type.name, ...lifecycleMethods].map(n => n.replace(/[^\w]/g, '')).join('|');
   const pattern = new RegExp(`\\b(${names})\\s*\\(`, 'g');
   pattern.lastIndex = type.bodyStart + 1;
   let m: RegExpExecArray | null;
