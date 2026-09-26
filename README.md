@@ -55,6 +55,11 @@ and [CHANGELOG.md](CHANGELOG.md) for what changed.
 - **Run on save** (off by default, `whatTheTest.runTestsOnSave`): after each
   save, runs the tests that cover the lines that save changed.
 
+Each test entry says how it reaches the line, for example *calls it directly*
+or *via Calculator.Sum → Parse*.
+
+<img src="docs/images/quick-pick.png" width="602" alt="Quick pick titled '7 tests cover line 23 (roundCents)', listing Run all, Debug all and each test with how it reaches the line, such as 'via subtotal → lineTotal'.">
+
 ### Keyboard shortcuts
 
 They follow VS Code's own test shortcuts (`Ctrl+; C` runs the test at the
@@ -72,11 +77,6 @@ instead of `Ctrl`.
 
 The line shortcuts work in an editor of a supported language and in the Tests
 Covering Line view.
-
-Each test entry says how it reaches the line, for example *calls it directly*
-or *via Calculator.Sum → Parse*.
-
-<img src="docs/images/quick-pick.png" width="602" alt="Quick pick titled '7 tests cover line 23 (roundCents)', listing Run all, Debug all and each test with how it reaches the line, such as 'via subtotal → lineTotal'.">
 
 ## How it works
 
