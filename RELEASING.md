@@ -67,7 +67,7 @@ which:
 3. Creates a GitHub Release named after the tag. It attaches the `.vsix` and
    uses the version's changelog section as the release notes.
 4. *Optional:* publishes to the VS Code Marketplace if the repository has a
-   `VSCE_PAT` secret (a personal access token for the `andorbal` publisher).
+   `VSCE_PAT` secret (a personal access token for the `AndrewBenz` publisher).
    Without the secret, this step is skipped.
 
 ## Installing a build
