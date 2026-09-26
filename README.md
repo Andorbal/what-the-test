@@ -36,7 +36,10 @@ and [CHANGELOG.md](CHANGELOG.md) for what changed.
 - **Status bar**: a beaker icon and the test count for the current line. Click it to open the test list.
 - **Tests Covering Line view** in the Testing side bar: lists the tests for the
   current line, each with **Run**, **Debug** and **Go to Test** buttons, and
-  **Run All**, **Debug All** and **Refresh** in the view title.
+  **Run All**, **Debug All**, **Refresh** and **Pin** in the view title.
+  When you go into one of the listed tests, the list stays and that test is
+  selected, so you can go through them one by one. **Pin** keeps the list
+  wherever the cursor goes, until you unpin it.
 - **Quick pick** (`What the Test: Show Tests Covering Line`, also in the editor
   context menu): previews each test as you move through the list. Pick a test
   to open it, use the item buttons to run or debug it, or choose *Run all* / *Debug all*.

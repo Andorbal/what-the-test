@@ -15,7 +15,7 @@ export class LineIndicators implements vscode.Disposable {
   });
   private readonly disposables: vscode.Disposable[] = [];
 
-  constructor(service: LineTestsService) {
+  constructor(private readonly service: LineTestsService) {
     this.statusBar.name = 'What the Test';
     this.statusBar.command = 'whatTheTest.showTestsForLine';
     this.disposables.push(
@@ -38,19 +38,26 @@ export class LineIndicators implements vscode.Disposable {
   }
 
   private renderStatusBar(state: LineTestsState, enabled: boolean): void {
-    if (!enabled || state.status === 'idle' || (state.status === 'ready' && state.result.enclosingTest)) {
+    const pinned = this.service.pinned;
+    if (!enabled || state.status === 'idle' || (state.status === 'ready' && state.result.enclosingTest && !pinned)) {
       this.statusBar.hide();
       return;
     }
+    const pin = pinned ? ' $(pinned)' : '';
     if (state.status === 'loading') {
-      this.statusBar.text = '$(loading~spin) Tests';
+      this.statusBar.text = `$(loading~spin) Tests${pin}`;
       this.statusBar.tooltip = `Finding tests that cover line ${state.line + 1}…`;
     } else {
       const { result } = state;
       const count = result.tests.length;
-      this.statusBar.text = `$(beaker) ${count}${result.truncated ? '+' : ''}`;
+      this.statusBar.text = `$(beaker) ${count}${result.truncated ? '+' : ''}${pin}`;
+      // The list may be for another line: it is pinned, or the cursor is in one of its tests.
+      const editor = vscode.window.activeTextEditor;
+      const where = editor?.document.uri.toString() === result.uri.toString() && editor.selection.active.line === result.line
+        ? `line ${result.line + 1}`
+        : `${vscode.workspace.asRelativePath(result.uri)}:${result.line + 1}`;
       this.statusBar.tooltip = count
-        ? `${pluralTests(count)} ${covers(count)} line ${result.line + 1}${result.symbolName ? ` (${result.symbolName})` : ''}. Click to show, go to or run them.`
+        ? `${pluralTests(count)} ${covers(count)} ${where}${result.symbolName ? ` (${result.symbolName})` : ''}${pinned ? ' (pinned)' : ''}. Click to show, go to or run them.`
         : noTestsMessage(result);
     }
     this.statusBar.show();

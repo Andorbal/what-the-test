@@ -31,11 +31,9 @@ export function activate(context: vscode.ExtensionContext): WhatTheTestApi {
 
   /** The result for the active line, computing it if the cached one is stale. */
   const currentResult = async (): Promise<LineTestsResult | undefined> => {
-    const editor = vscode.window.activeTextEditor;
-    const state = service.state;
-    if (editor && state.status === 'ready' &&
-      state.result.uri.toString() === editor.document.uri.toString() && state.result.line === editor.selection.active.line) {
-      return state.result;
+    const shown = service.displayedResult;
+    if (shown) {
+      return shown;
     }
     return vscode.window.withProgress(
       { location: vscode.ProgressLocation.Window, title: 'Finding covering tests' },
@@ -75,7 +73,9 @@ export function activate(context: vscode.ExtensionContext): WhatTheTestApi {
     }),
     vscode.commands.registerCommand('whatTheTest.runTestsForLine', () => runAll('run')),
     vscode.commands.registerCommand('whatTheTest.debugTestsForLine', () => runAll('debug')),
-    vscode.commands.registerCommand('whatTheTest.refresh', () => service.refreshNow()),
+    vscode.commands.registerCommand('whatTheTest.refresh', () => service.refreshNow({ clearCache: true })),
+    vscode.commands.registerCommand('whatTheTest.pin', () => service.setPinned(true)),
+    vscode.commands.registerCommand('whatTheTest.unpin', () => service.setPinned(false)),
     vscode.commands.registerCommand('whatTheTest.runTest', (arg: unknown) => runOne(arg, 'run')),
     vscode.commands.registerCommand('whatTheTest.debugTest', (arg: unknown) => runOne(arg, 'debug')),
     vscode.commands.registerCommand('whatTheTest.goToTest', async (arg: unknown) => {

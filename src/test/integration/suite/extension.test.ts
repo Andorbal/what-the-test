@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import type { LineTestsResult } from '../../../core/coveringTestFinder';
 import type { WhatTheTestApi } from '../../../extension';
 
 const workspace = () => vscode.workspace.workspaceFolders![0].uri;
@@ -227,5 +228,54 @@ suite('What the Test', () => {
     const editor = vscode.window.activeTextEditor!;
     assert.strictEqual(editor.document.uri.toString(), testUri().toString());
     assert.strictEqual(editor.document.getText(editor.selection), 'adds two numbers');
+  });
+
+  test('keeps the list while going through its tests', async () => {
+    const line = await lineOf(sourceUri(), 'return a + b');
+    await placeCursor(sourceUri(), line);
+    const result = await vscode.commands.executeCommand<LineTestsResult>('whatTheTest.refresh');
+    assert.strictEqual(result.tests.length, 2);
+
+    // Going to a listed test keeps the list for the original line...
+    await vscode.commands.executeCommand('whatTheTest.goToTest', result.tests[1]);
+    const held = await vscode.commands.executeCommand<LineTestsResult>('whatTheTest.refresh');
+    assert.strictEqual(held.uri.toString(), sourceUri().toString());
+    assert.strictEqual(held.line, line);
+    assert.deepStrictEqual(held.tests.map(t => t.declaration.name), ['adds two numbers', 'sums a list']);
+
+    // ...so "Run All" still runs all of them.
+    const fake = await createFakeController('fake-held', path => ['held', ...path].join('.'));
+    try {
+      const done = fake.waitForRuns(1);
+      await vscode.commands.executeCommand('whatTheTest.runTestsForLine');
+      await done;
+      assert.deepStrictEqual([...fake.ran].sort(), ['adds two numbers', 'sums a list']);
+    } finally {
+      fake.controller.dispose();
+    }
+
+    // Leaving the tests follows the cursor again.
+    await placeCursor(testUri(), 0);
+    const after = await vscode.commands.executeCommand<LineTestsResult>('whatTheTest.refresh');
+    assert.strictEqual(after.uri.toString(), testUri().toString());
+    assert.strictEqual(after.line, 0);
+  });
+
+  test('pins the list to a line', async () => {
+    const line = await lineOf(sourceUri(), 'return a + b');
+    await placeCursor(sourceUri(), line);
+    await vscode.commands.executeCommand('whatTheTest.refresh');
+    await vscode.commands.executeCommand('whatTheTest.pin');
+    try {
+      await placeCursor(sourceUri(), await lineOf(sourceUri(), 'nobody calls me'));
+      const pinned = await vscode.commands.executeCommand<LineTestsResult>('whatTheTest.refresh');
+      assert.strictEqual(pinned.line, line);
+      assert.strictEqual(pinned.tests.length, 2);
+    } finally {
+      await vscode.commands.executeCommand('whatTheTest.unpin');
+    }
+    const unpinned = await vscode.commands.executeCommand<LineTestsResult>('whatTheTest.refresh');
+    assert.strictEqual(unpinned.line, await lineOf(sourceUri(), 'nobody calls me'));
+    assert.strictEqual(unpinned.tests.length, 0);
   });
 });

@@ -59,6 +59,18 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "whatTheTest.pin",
+        "title": "Pin Tests Covering Line",
+        "category": "What the Test",
+        "icon": "$(pin)"
+      },
+      {
+        "command": "whatTheTest.unpin",
+        "title": "Unpin Tests Covering Line",
+        "category": "What the Test",
+        "icon": "$(pinned)"
+      },
+      {
         "command": "whatTheTest.runTest",
         "title": "Run Test",
         "category": "What the Test",
@@ -105,6 +117,14 @@
         {
           "command": "whatTheTest.goToTest",
           "when": "false"
+        },
+        {
+          "command": "whatTheTest.pin",
+          "when": "!whatTheTest.pinned"
+        },
+        {
+          "command": "whatTheTest.unpin",
+          "when": "whatTheTest.pinned"
         }
       ],
       "editor/context": [
@@ -139,6 +159,16 @@
           "command": "whatTheTest.refresh",
           "when": "view == whatTheTest.lineTests",
           "group": "navigation@3"
+        },
+        {
+          "command": "whatTheTest.pin",
+          "when": "view == whatTheTest.lineTests && !whatTheTest.pinned",
+          "group": "navigation@4"
+        },
+        {
+          "command": "whatTheTest.unpin",
+          "when": "view == whatTheTest.lineTests && whatTheTest.pinned",
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [

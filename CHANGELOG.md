@@ -5,6 +5,21 @@ All notable changes to What the Test are documented here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); see
 [RELEASING.md](RELEASING.md) for how versions are chosen and released.
 
+## [Unreleased]
+
+### Added
+
+- The Tests Covering Line view keeps its list when you go into one of the
+  listed tests, and selects that test, so you can go through them one by one.
+  "Run All" and "Debug All" still run the whole list.
+- **Pin** button in the Tests Covering Line view (and `Pin Tests Covering Line`
+  / `Unpin Tests Covering Line` commands) to stop the list from following the cursor.
+
+### Fixed
+
+- The view's **Refresh** button now discards cached results, so it picks up
+  tests the language server hadn't indexed yet.
+
 ## [0.2.2]
 
 ### Changed
