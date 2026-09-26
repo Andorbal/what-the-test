@@ -56,10 +56,12 @@ fields), it uses *Find All References* instead. When a call site falls inside a
 test, the test is recorded and the walk stops on that branch. Otherwise the
 walk continues through the caller.
 
-- The line is inside a test: that test covers it.
+- The line is inside a test or a setup region: no tests are listed, because
+  the line is test code rather than code under test.
 - The call site is in a setup region (`beforeEach`, `[SetUp]`,
   `[TestInitialize]`, an xUnit constructor, ...): the enclosing suite covers it.
-- Helper functions in test files are walked through like any other caller.
+- Helper functions in test files are walked through like any other caller, so
+  a line in a helper lists the tests that use it.
 - The walk is bounded by `whatTheTest.maxSearchDepth` and
   `whatTheTest.maxVisitedSymbols`. A `+` after the count means a limit was hit.
 

@@ -1,8 +1,16 @@
 import * as vscode from 'vscode';
-import { CoveringTest } from '../core/coveringTestFinder';
+import { CoveringTest, LineTestsResult } from '../core/coveringTestFinder';
 
 export function pluralTests(count: number): string {
   return `${count} ${count === 1 ? 'test' : 'tests'}`;
+}
+
+/** Why a result has no tests, e.g. `Line 12 is part of the test 'adds two numbers'.` */
+export function noTestsMessage(result: LineTestsResult): string {
+  const test = result.enclosingTest;
+  return test
+    ? `Line ${result.line + 1} is part of the ${test.kind} '${test.name}'.`
+    : `No tests found that cover line ${result.line + 1}.`;
 }
 
 /** e.g. `Calculator › add › adds two numbers` (without the namespace for C#). */
@@ -18,9 +26,6 @@ export function testLocation(test: CoveringTest): string {
 
 /** Describes how the test reaches the line, e.g. `directly` or `via parse → tokenize`. */
 export function testReach(test: CoveringTest): string {
-  if (test.distance === 0) {
-    return 'line is inside this test';
-  }
   if (!test.via.length) {
     return 'calls it directly';
   }
