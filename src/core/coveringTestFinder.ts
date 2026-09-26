@@ -77,7 +77,8 @@ interface Abstraction {
  *
  * This is a static approximation of coverage: it works without running
  * anything and for every language whose extension provides call hierarchy or
- * references, which covers C# (C# / C# Dev Kit) and TS/JS (built in).
+ * references (TypeScript's built-in server, Roslyn, FsAutoComplete, gopls,
+ * JDT and Pylance all do).
  */
 export class CoveringTestFinder {
   private readonly symbolCache = new Map<string, { version: number; symbols: vscode.DocumentSymbol[] }>();

@@ -1,5 +1,5 @@
 export function add(a: number, b: number): number {
-  return a + b;
+  return b + a;
 }
 
 export function sum(values: number[]): number {
