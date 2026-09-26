@@ -32,7 +32,7 @@ suite('What the Test (C#)', () => {
 
   suiteSetup(async function () {
     this.timeout(300_000);
-    const ext = vscode.extensions.getExtension<WhatTheTestApi>('andorbal.what-the-test')!;
+    const ext = vscode.extensions.getExtension<WhatTheTestApi>('AndrewBenz.what-the-test')!;
     api = await ext.activate();
     await vscode.window.showTextDocument(sourceUri());
     await vscode.workspace.openTextDocument(testUri());

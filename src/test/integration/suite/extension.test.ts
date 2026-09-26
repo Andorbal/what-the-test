@@ -97,7 +97,7 @@ suite('What the Test', () => {
   let api: WhatTheTestApi;
 
   suiteSetup(async () => {
-    const ext = vscode.extensions.getExtension<WhatTheTestApi>('andorbal.what-the-test')!;
+    const ext = vscode.extensions.getExtension<WhatTheTestApi>('AndrewBenz.what-the-test')!;
     api = await ext.activate();
     // Wait for the TypeScript language server to be ready.
     const line = await lineOf(sourceUri(), 'export function add');
