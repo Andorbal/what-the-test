@@ -5,6 +5,11 @@ export function pluralTests(count: number): string {
   return `${count} ${count === 1 ? 'test' : 'tests'}`;
 }
 
+/** The verb that follows {@link pluralTests}: `1 test covers`, `2 tests cover`. */
+export function covers(count: number): string {
+  return count === 1 ? 'covers' : 'cover';
+}
+
 /** Why a result has no tests, e.g. `Line 12 is part of the test 'adds two numbers'.` */
 export function noTestsMessage(result: LineTestsResult): string {
   const test = result.enclosingTest;

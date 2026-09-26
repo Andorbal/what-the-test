@@ -5,6 +5,8 @@ how many tests reach the line under your cursor, lets you jump to any of them,
 and runs one or all of them through VS Code's built-in **Testing**
 infrastructure. It doesn't add a test runner of its own.
 
+![Moving the cursor through a TypeScript file updates the test count at the end of the line, in the status bar and in the Tests Covering Line view; Run All then runs the 7 covering tests with the Jest extension.](docs/images/demo.gif)
+
 Supported out of the box:
 
 | Language | Test frameworks recognised | Runs through |
@@ -43,6 +45,8 @@ and [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 Each test entry says how it reaches the line, for example *calls it directly*
 or *via Calculator.Sum → Parse*.
+
+<img src="docs/images/quick-pick.png" width="602" alt="Quick pick titled '7 tests cover line 23 (roundCents)', listing Run all, Debug all and each test with how it reaches the line, such as 'via subtotal → lineTotal'.">
 
 ## How it works
 
@@ -177,6 +181,7 @@ npm run test:unit                 # parsers and ID matching, plain Node
 npm run test:integration          # in VS Code: TS language server + fake test controllers
 npm run test:integration:csharp   # in VS Code with the C# extension (needs the .NET SDK)
 npm run package                   # builds what-the-test-<version>.vsix
+npm run screenshots               # re-records the images in docs/images
 ```
 
 On Linux without a display, prefix the integration tests with `xvfb-run -a`.
@@ -187,3 +192,10 @@ The TypeScript integration tests register fake test controllers, one with
 name-based IDs and one with opaque IDs. They check that the right tests reach
 VS Code's Testing API through both `vscode.runTestsById` and the Run Test at
 Cursor fallback.
+
+`npm run screenshots` packages the extension, installs it and the Jest
+extension into a separate VS Code profile in `.vscode-test/screenshots`, and
+records the small project in [scripts/screenshots/shop](scripts/screenshots/shop)
+with Playwright. It needs `ffmpeg` on the `PATH` (or `FFMPEG=/path/to/ffmpeg`)
+and, on Linux without a display, `xvfb-run`. The current images were recorded
+on Linux; fonts look different on other systems.

@@ -225,6 +225,7 @@
     "test:integration": "npm run compile && node ./out/test/integration/runTests.js",
     "test": "npm run test:unit && npm run test:integration",
     "package": "node scripts/package.mjs",
+    "screenshots": "node scripts/screenshots/record.mjs",
     "test:integration:csharp": "npm run compile && node ./out/test/integration/runCSharpTests.js",
     "version": "node scripts/changelog.mjs release $npm_package_version && git add CHANGELOG.md"
   },
@@ -235,6 +236,7 @@
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.0.0",
     "mocha": "^11.7.0",
+    "playwright-core": "^1.63.0",
     "typescript": "~5.9.3"
   }
 }

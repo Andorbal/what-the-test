@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { CoveringTest } from '../core/coveringTestFinder';
 import { LineTestsService } from './lineTestsService';
-import { noTestsMessage, pluralTests, testIcon, testLocation, testReach, testTitle } from './format';
+import { covers, noTestsMessage, pluralTests, testIcon, testLocation, testReach, testTitle } from './format';
 
 /** "Tests Covering Line" view in the Testing side bar. */
 export class LineTestsTreeView implements vscode.TreeDataProvider<CoveringTest>, vscode.Disposable {
@@ -26,7 +26,7 @@ export class LineTestsTreeView implements vscode.TreeDataProvider<CoveringTest>,
       const file = vscode.workspace.asRelativePath(result.uri);
       this.view.description = `${file}:${result.line + 1}`;
       this.view.message = result.tests.length
-        ? `${pluralTests(result.tests.length)}${result.truncated ? ' (search limit reached)' : ''} cover line ${result.line + 1}${result.symbolName ? ` in ${result.symbolName}` : ''}.`
+        ? `${pluralTests(result.tests.length)}${result.truncated ? ' (search limit reached)' : ''} ${covers(result.tests.length)} line ${result.line + 1}${result.symbolName ? ` in ${result.symbolName}` : ''}.`
         : noTestsMessage(result);
     } else {
       this.view.message = undefined;
