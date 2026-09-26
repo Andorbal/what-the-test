@@ -398,11 +398,11 @@ export class CoveringTestFinder {
 /**
  * Language servers decorate names differently; strip parameter lists and
  * return types, e.g. Roslyn's `Calculator.Sum(IEnumerable<int>)` or
- * `Add(int, int) : int`.
+ * `Add(int, int) : int`, and F# self-identifiers such as `this.Sum`.
  */
 export function displayName(name: string): string {
   const paren = name.indexOf('(');
-  return (paren > 0 ? name.slice(0, paren) : name).trim();
+  return (paren > 0 ? name.slice(0, paren) : name).trim().replace(/^(?:this|self|_|__|x)\./, '');
 }
 
 /** TypeScript names anonymous functions after their call site, e.g. `describe('x') callback`. */

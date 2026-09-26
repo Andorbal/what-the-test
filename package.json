@@ -21,12 +21,14 @@
     "coverage",
     "csharp",
     "dotnet",
+    "fsharp",
     "typescript",
     "javascript"
   ],
   "main": "./out/extension.js",
   "activationEvents": [
     "onLanguage:csharp",
+    "onLanguage:fsharp",
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
     "onLanguage:javascript",
@@ -119,7 +121,7 @@
     "viewsWelcome": [
       {
         "view": "whatTheTest.lineTests",
-        "contents": "Place the cursor on a line of C#, TypeScript or JavaScript code to see the tests that exercise it."
+        "contents": "Place the cursor on a line of C#, F#, TypeScript or JavaScript code to see the tests that exercise it."
       }
     ],
     "menus": {
@@ -313,6 +315,14 @@
           "default": [],
           "description": "Extra C# attribute names (without the 'Attribute' suffix) that mark a method as a test."
         },
+        "whatTheTest.fsharp.additionalTestAttributes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra F# attribute names (without the 'Attribute' suffix) that mark a function or member as a test."
+        },
         "whatTheTest.javascript.additionalTestFunctions": {
           "type": "array",
           "items": {
@@ -338,10 +348,11 @@
     "watch": "tsc -watch -p ./",
     "test:unit": "npm run compile && mocha \"out/test/unit/**/*.test.js\"",
     "test:integration": "npm run compile && node ./out/test/integration/runTests.js",
+    "test:integration:csharp": "npm run compile && node ./out/test/integration/runLanguageTests.js csharp",
+    "test:integration:fsharp": "npm run compile && node ./out/test/integration/runLanguageTests.js fsharp",
     "test": "npm run test:unit && npm run test:integration",
     "package": "node scripts/package.mjs",
     "screenshots": "node scripts/screenshots/record.mjs",
-    "test:integration:csharp": "npm run compile && node ./out/test/integration/runCSharpTests.js",
     "version": "node scripts/changelog.mjs release $npm_package_version && git add CHANGELOG.md"
   },
   "devDependencies": {

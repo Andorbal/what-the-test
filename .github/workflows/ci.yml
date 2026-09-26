@@ -26,6 +26,8 @@ jobs:
           dotnet-version: 8.0.x
       - name: Integration tests (C#)
         run: xvfb-run -a npm run test:integration:csharp
+      - name: Integration tests (F#)
+        run: xvfb-run -a npm run test:integration:fsharp
 
   package:
     runs-on: ubuntu-latest

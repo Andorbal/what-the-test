@@ -9,6 +9,11 @@ All notable changes to What the Test are documented here. The format follows
 
 ### Added
 
+- F# support: xUnit, NUnit, MSTest and FsCheck tests (attributed `let`
+  bindings and members, including ``` ``double backtick`` ``` names) and
+  Expecto `testList` / `testCase` / `test` declarations. Uses Ionide's
+  language server; tests run through Ionide's or any other .NET test controller.
+  New setting `whatTheTest.fsharp.additionalTestAttributes`.
 - The Tests Covering Line view keeps its list when you go into one of the
   listed tests, and selects that test, so you can go through them one by one.
   "Run All" and "Debug All" still run the whole list.

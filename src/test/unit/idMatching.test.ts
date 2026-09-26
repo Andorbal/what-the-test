@@ -42,6 +42,25 @@ describe('matchTestId', () => {
     assert.deepStrictEqual(matchTestId(decl(['Array'], 'suite'), candidates.map(c => c.slice(0, 3))), candidates[0].slice(0, 3));
   });
 
+  it('matches Ionide (F#) IDs for xUnit and Expecto tests', () => {
+    const proj = '/repo/tests/Calc.Tests/Calc.Tests.fsproj -- ';
+    const xunit = [
+      ['fsharp-test-controller', proj, `${proj}Calc`, `${proj}Calc.Tests`, `${proj}Calc.Tests.CalculatorTests`],
+      ['fsharp-test-controller', proj, `${proj}Calc`, `${proj}Calc.Tests`, `${proj}Calc.Tests.CalculatorTests`, `${proj}Calc.Tests.CalculatorTests.Add returns the sum`],
+      ['fsharp-test-controller', proj, `${proj}Calc`, `${proj}Calc.Tests`, `${proj}Calc.Tests.CalculatorTests`, `${proj}Calc.Tests.CalculatorTests.Sum adds all values`],
+    ];
+    assert.deepStrictEqual(matchTestId(decl(['Calc.Tests', 'CalculatorTests', 'Sum adds all values']), xunit), xunit[2]);
+    assert.deepStrictEqual(matchTestId(decl(['Calc.Tests', 'CalculatorTests'], 'suite'), xunit), xunit[0]);
+
+    const expecto = [
+      ['fsharp-test-controller', proj, `${proj}strings`, `${proj}strings.sums`],
+      ['fsharp-test-controller', proj, `${proj}strings`, `${proj}strings.sums`, `${proj}strings.sums.sums with the calculator`],
+      ['fsharp-test-controller', proj, `${proj}strings`, `${proj}strings.shouts`],
+    ];
+    assert.deepStrictEqual(matchTestId(decl(['strings', 'sums', 'sums with the calculator']), expecto), expecto[1]);
+    assert.deepStrictEqual(matchTestId(decl(['strings', 'sums'], 'suite'), expecto), expecto[0]);
+  });
+
   it('does not match partial words', () => {
     const candidates = [['c', 'Tests.AddMany']];
     assert.strictEqual(matchTestId(decl(['Add']), candidates), undefined);

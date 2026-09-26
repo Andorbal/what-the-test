@@ -12,6 +12,7 @@ Supported out of the box:
 | Language | Test frameworks recognised | Runs through |
 | --- | --- | --- |
 | C# / .NET | xUnit, NUnit, MSTest, TUnit, FsCheck | C# Dev Kit or any other .NET test controller |
+| F# | xUnit, NUnit, MSTest, FsCheck, Expecto | Ionide, C# Dev Kit or any other .NET test controller |
 | TypeScript / JavaScript (incl. JSX/TSX) | Jest, Vitest, Mocha (BDD & TDD), Jasmine, `node:test`, Playwright, Bun | Jest, Vitest, Mocha Test Explorer, Playwright, ... |
 
 Other languages can be added by implementing a small adapter (see
@@ -106,7 +107,8 @@ walk continues through the caller.
   `whatTheTest.maxVisitedSymbols`. A `+` after the count means a limit was hit.
 
 The language servers do the semantic work, so no build or test run is needed:
-the TypeScript server built into VS Code, and Roslyn from the C# extension. Each
+the TypeScript server built into VS Code, Roslyn from the C# extension and
+FsAutoComplete from Ionide for F#. Each
 language adapter only needs to recognise which parts of a test file are tests.
 
 > This is *reachability*, not runtime coverage. Calls through reflection,
@@ -142,6 +144,7 @@ example C# Dev Kit, Jest, Vitest or Mocha Test Explorer).
 | `whatTheTest.debounceMs` | `400` | Delay after the cursor stops before searching. |
 | `whatTheTest.runTestsOnSave` | `false` | After saving a file, run the tests covering the lines that changed. |
 | `whatTheTest.csharp.additionalTestAttributes` | `[]` | Extra attributes that mark a C# test method. |
+| `whatTheTest.fsharp.additionalTestAttributes` | `[]` | Extra attributes that mark an F# test. |
 | `whatTheTest.javascript.additionalTestFunctions` | `[]` | Extra JS/TS functions that declare a test. |
 | `whatTheTest.javascript.additionalSuiteFunctions` | `[]` | Extra JS/TS functions that declare a suite. |
 
@@ -166,6 +169,7 @@ export interface LanguageAdapter {
 range, plus any setup regions. See the built-in adapters for examples:
 
 - C#: [csharpAdapter.ts](src/languages/csharp/csharpAdapter.ts) and [csharpTestParser.ts](src/languages/csharp/csharpTestParser.ts)
+- F#: [fsharpAdapter.ts](src/languages/fsharp/fsharpAdapter.ts) and [fsharpTestParser.ts](src/languages/fsharp/fsharpTestParser.ts)
 - JS/TS: [javascriptAdapter.ts](src/languages/javascript/javascriptAdapter.ts) and [jsTestParser.ts](src/languages/javascript/jsTestParser.ts)
 
 The parsers are plain TypeScript with no `vscode` import, so you can unit test
@@ -203,6 +207,7 @@ src/
   languages/
     text.ts                    shared scanning helpers
     csharp/                    C# masking, parser and adapter
+    fsharp/                    F# masking, parser (attributes and Expecto) and adapter
     javascript/                JS/TS masking, parser and adapter
   ui/                          status bar, inline hint, tree view, quick pick
   test/
@@ -211,6 +216,7 @@ src/
 test-fixtures/
   ts-project/                  small TS project used by the integration tests
   csharp-project/              small xUnit solution used by the C# integration tests
+  fsharp-project/              small xUnit + Expecto solution used by the F# integration tests
 ```
 
 ## Development
@@ -221,13 +227,14 @@ npm run compile
 npm run test:unit                 # parsers and ID matching, plain Node
 npm run test:integration          # in VS Code: TS language server + fake test controllers
 npm run test:integration:csharp   # in VS Code with the C# extension (needs the .NET SDK)
+npm run test:integration:fsharp   # in VS Code with Ionide (needs the .NET SDK)
 npm run package                   # builds what-the-test-<version>.vsix
 npm run screenshots               # re-records the images in docs/images
 ```
 
 On Linux without a display, prefix the integration tests with `xvfb-run -a`.
 Press <kbd>F5</kbd> in VS Code to start an Extension Development Host. The
-launch configurations open the TS or C# fixture project.
+launch configurations open the TS, C# or F# fixture project.
 
 The TypeScript integration tests register fake test controllers, one with
 name-based IDs and one with opaque IDs. They check that the right tests reach

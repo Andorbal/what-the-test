@@ -24,6 +24,14 @@
       "args": ["--extensionDevelopmentPath=${workspaceFolder}", "${workspaceFolder}/test-fixtures/csharp-project"],
       "outFiles": ["${workspaceFolder}/out/**/*.js"],
       "preLaunchTask": "npm: watch"
+    },
+    {
+      "name": "Run Extension (F# fixture)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}", "${workspaceFolder}/test-fixtures/fsharp-project"],
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "npm: watch"
     }
   ]
 }
