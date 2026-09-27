@@ -1,8 +1,8 @@
 name: Marketplace check
 
-# Run by hand to check Marketplace publishing before tagging a release (RELEASING.md).
-# It signs in exactly as the release's publish-vscode job does and checks that the
-# identity can publish as AndrewBenz. It publishes nothing.
+# Run by hand to check publishing before tagging a release (RELEASING.md). It
+# authenticates exactly as the release's publish jobs do and checks that each can
+# publish as AndrewBenz: to the VS Code Marketplace and to Open VSX. It publishes nothing.
 
 on:
   workflow_dispatch:
@@ -11,8 +11,8 @@ permissions:
   contents: read
 
 jobs:
-  check:
-    name: Check publish rights
+  check-vscode:
+    name: Check VS Code Marketplace publish rights
     runs-on: ubuntu-latest
     environment: vscode-marketplace
     permissions:
@@ -38,5 +38,26 @@ jobs:
             echo "### The identity can publish as AndrewBenz" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "### The identity can't publish as AndrewBenz: is it a member of the publisher?" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+  check-openvsx:
+    name: Check Open VSX publish rights
+    runs-on: ubuntu-latest
+    environment: open-vsx
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Check publish rights for the AndrewBenz namespace
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if npx --yes ovsx@1.2.0 verify-pat AndrewBenz; then
+            echo "### The OVSX_PAT token can publish to the AndrewBenz namespace" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### The OVSX_PAT token can't publish to AndrewBenz: is the secret set and the namespace created?" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi

@@ -7,6 +7,12 @@ All notable changes to What the Test are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Published to [Open VSX](https://open-vsx.org/extension/AndrewBenz/what-the-test)
+  as well as the Visual Studio Marketplace, for VSCodium, Cursor, Windsurf and
+  other editors that use it.
+
 ## [0.4.0] - 2026-09-27
 
 ### Added
