@@ -1,4 +1,4 @@
-# What the Test
+# <img src="media/icon.png" alt="" width="40" height="40"> What the Test
 
 A VS Code extension that answers **"which tests exercise this line?"** It shows
 how many tests reach the line under your cursor, lets you jump to any of them,

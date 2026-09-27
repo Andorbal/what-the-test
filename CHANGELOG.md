@@ -7,6 +7,8 @@ All notable changes to What the Test are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-27
+
 ### Added
 
 - F# support: xUnit, NUnit, MSTest and FsCheck tests (attributed `let`
@@ -42,6 +44,7 @@ All notable changes to What the Test are documented here. The format follows
   the tests covering the line (`Ctrl+; Ctrl+W` debugs them, `Ctrl+; Shift+W`
   lists them), and `Ctrl+; G` / `Ctrl+; Ctrl+G` / `Ctrl+; Shift+G` do the same
   for the tests covering your changes. `Cmd` instead of `Ctrl` on macOS.
+- An extension icon.
 
 ### Changed
 
@@ -55,19 +58,19 @@ All notable changes to What the Test are documented here. The format follows
 - The view's **Refresh** button now discards cached results, so it picks up
   tests the language server hadn't indexed yet.
 
-## [0.2.2]
+## [0.2.2] - 2026-09-26
 
 ### Changed
 
 - Fixed publisher in integration tests
 
-## [0.2.1]
+## [0.2.1] - 2026-09-26
 
 ### Changed
 
 - Fixed the publisher to match the actual value
 
-## [0.2.0]
+## [0.2.0] - 2026-09-26
 
 ### Added
 
@@ -102,5 +105,9 @@ All notable changes to What the Test are documented here. The format follows
   (Jest, Vitest, Mocha, Jasmine, `node:test`, Playwright).
 - Pluggable language adapters, including registration from other extensions.
 
-[Unreleased]: https://github.com/andorbal/what-the-test/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/andorbal/what-the-test/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/andorbal/what-the-test/compare/v0.2.2...v0.4.0
+[0.2.2]: https://github.com/andorbal/what-the-test/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/andorbal/what-the-test/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/andorbal/what-the-test/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/andorbal/what-the-test/releases/tag/v0.1.0
