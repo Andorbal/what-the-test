@@ -62,18 +62,21 @@ which:
 
 1. Checks that the tag matches `package.json` and that CHANGELOG.md has
    entries for the version.
-2. Runs the full CI workflow: unit tests, TypeScript and C# integration tests,
-   and packaging.
+2. Runs the full CI workflow: unit tests, integration tests for every
+   supported language (TypeScript, C#, F#, Go, Python and Java), and packaging.
 3. Creates a GitHub Release named after the tag. It attaches the `.vsix` and
    uses the version's changelog section as the release notes.
-4. Publishes the `.vsix` to the VS Code Marketplace as the `AndrewBenz`
-   publisher (a pre-release for odd minors). If this job fails, re-run just
-   this job once the problem is fixed; the GitHub Release is already in place.
+4. Publishes that `.vsix` to the VS Code Marketplace and to Open VSX, as the
+   `AndrewBenz` publisher (a pre-release for odd minors). Each is its own job:
+   if one fails, re-run just that job once the problem is fixed; the GitHub
+   Release is already in place.
 
 ## Marketplace publishing
 
-The publish job signs in with Microsoft Entra ID; there is no personal access
-token. It needs:
+### VS Code Marketplace
+
+The `publish-vscode` job signs in with Microsoft Entra ID; there is no personal
+access token. It needs:
 
 - A GitHub environment named `vscode-marketplace` whose deployment policy
   allows `v*` tags, with the **variables** (not secrets) `AZURE_CLIENT_ID` and
@@ -85,7 +88,29 @@ token. It needs:
   `AndrewBenz` publisher at
   <https://marketplace.visualstudio.com/manage/publishers/AndrewBenz>.
 
-To check all three without publishing anything, run the
+### Open VSX
+
+[Open VSX](https://open-vsx.org) is the registry used by VSCodium, Cursor,
+Windsurf, Gitpod and other VS Code builds that can't use Microsoft's
+Marketplace. It only supports personal access tokens, so the `publish-openvsx`
+job needs:
+
+- An open-vsx.org account (sign in with GitHub) linked to an Eclipse account,
+  with the Eclipse Foundation Open VSX Publisher Agreement signed, both from
+  the account's settings page.
+- An access token from **Settings → Access Tokens**, used once to create the
+  namespace that matches `publisher` in `package.json`:
+  `npx --yes ovsx@1.2.0 create-namespace AndrewBenz -p <token>`.
+- A GitHub environment named `open-vsx` whose deployment policy allows `main`
+  and `v*` tags, with that token as the **secret** `OVSX_PAT`.
+
+Until the namespace's ownership is verified, Open VSX shows the extension as
+unverified; to verify it, open a namespace-ownership issue at
+<https://github.com/EclipseFdn/open-vsx.org/issues>.
+
+### Checking the setup
+
+To check both marketplaces without publishing anything, run the
 [Marketplace check](.github/workflows/marketplace-check.yml) workflow from the
 Actions tab.
 

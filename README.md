@@ -23,14 +23,25 @@ Other languages can be added by implementing a small adapter (see
 
 ## Installation
 
-Download `what-the-test-<version>.vsix` from the
-[latest GitHub Release](https://github.com/andorbal/what-the-test/releases), or
+Search for **What the Test** in the Extensions view, or install it from the
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=AndrewBenz.what-the-test)
+(VS Code) or [Open VSX](https://open-vsx.org/extension/AndrewBenz/what-the-test)
+(VSCodium, Cursor, Windsurf and other editors that use it). From the command line:
+
+```sh
+code --install-extension AndrewBenz.what-the-test
+```
+
+To install a specific build instead, download `what-the-test-<version>.vsix`
+from a [GitHub Release](https://github.com/andorbal/what-the-test/releases), or
 from the `vsix` artifact of any [CI run](https://github.com/andorbal/what-the-test/actions/workflows/ci.yml). Then either:
 
 - in VS Code, open the Extensions view → `…` → **Install from VSIX…**, or
 - run `code --install-extension what-the-test-<version>.vsix`.
 
-Versions with an odd minor number (such as 0.1.x) are pre-releases. See
+Versions with an odd minor number (such as 0.1.x) are pre-releases; to get
+them from the Marketplace, choose **Switch to Pre-Release Version** on the
+extension's page. See
 [RELEASING.md](RELEASING.md) for the versioning strategy and release process,
 and [CHANGELOG.md](CHANGELOG.md) for what changed.
 

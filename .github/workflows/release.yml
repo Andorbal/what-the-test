@@ -79,3 +79,25 @@ jobs:
       - name: Publish
         # The .vsix already records whether it is a pre-release.
         run: npx vsce publish --azure-credential --packagePath artifacts/*.vsix
+
+  publish-openvsx:
+    name: Publish to Open VSX
+    needs: release
+    runs-on: ubuntu-latest
+    # Holds the OVSX_PAT secret (RELEASING.md).
+    environment: open-vsx
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v8
+        with:
+          name: vsix
+          path: artifacts
+      - name: Publish
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        # The .vsix already records whether it is a pre-release.
+        run: npx --yes ovsx@1.2.0 publish --packagePath artifacts/*.vsix
