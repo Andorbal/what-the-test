@@ -47,10 +47,35 @@ jobs:
           flags=""
           if [ "${{ needs.verify.outputs.pre-release }}" = "true" ]; then flags="--prerelease"; fi
           gh release create "$GITHUB_REF_NAME" *.vsix --title "$GITHUB_REF_NAME" --notes-file notes.md $flags
-      - name: Publish to the VS Code Marketplace
-        # Optional: runs only when a VSCE_PAT secret is configured.
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        if: env.VSCE_PAT != ''
+
+  # A separate job so a failed publish can be re-run without re-creating the GitHub Release.
+  publish-vscode:
+    name: Publish to the VS Code Marketplace
+    needs: release
+    runs-on: ubuntu-latest
+    # Its federated credential (RELEASING.md) trusts only jobs in this environment.
+    environment: vscode-marketplace
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install the pinned vsce
+        run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: vsix
+          path: artifacts
+      - name: Sign in to Microsoft Entra ID
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      - name: Publish
         # The .vsix already records whether it is a pre-release.
-        run: npx --yes @vscode/vsce publish --packagePath *.vsix
+        run: npx vsce publish --azure-credential --packagePath artifacts/*.vsix

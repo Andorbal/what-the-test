@@ -2,9 +2,10 @@
   "name": "what-the-test",
   "displayName": "What the Test",
   "description": "See which tests exercise a line of code, jump to them, and run them through VS Code's built-in Testing infrastructure.",
-  "version": "0.2.2",
+  "version": "0.4.0",
   "publisher": "AndrewBenz",
   "license": "MIT",
+  "icon": "media/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/andorbal/what-the-test"

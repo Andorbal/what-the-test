@@ -66,9 +66,28 @@ which:
    and packaging.
 3. Creates a GitHub Release named after the tag. It attaches the `.vsix` and
    uses the version's changelog section as the release notes.
-4. *Optional:* publishes to the VS Code Marketplace if the repository has a
-   `VSCE_PAT` secret (a personal access token for the `AndrewBenz` publisher).
-   Without the secret, this step is skipped.
+4. Publishes the `.vsix` to the VS Code Marketplace as the `AndrewBenz`
+   publisher (a pre-release for odd minors). If this job fails, re-run just
+   this job once the problem is fixed; the GitHub Release is already in place.
+
+## Marketplace publishing
+
+The publish job signs in with Microsoft Entra ID; there is no personal access
+token. It needs:
+
+- A GitHub environment named `vscode-marketplace` whose deployment policy
+  allows `v*` tags, with the **variables** (not secrets) `AZURE_CLIENT_ID` and
+  `AZURE_TENANT_ID`.
+- An Entra app registration (that client ID) with a federated credential for
+  GitHub Actions: organization `Andorbal`, repository `what-the-test`, entity
+  type *Environment*, environment `vscode-marketplace`.
+- That identity added as a member (role Contributor or higher) of the
+  `AndrewBenz` publisher at
+  <https://marketplace.visualstudio.com/manage/publishers/AndrewBenz>.
+
+To check all three without publishing anything, run the
+[Marketplace check](.github/workflows/marketplace-check.yml) workflow from the
+Actions tab.
 
 ## Installing a build
 
